@@ -1,178 +1,108 @@
-import React, { useState, useEffect } from 'react';
-import { Mail, Lock, User, Sun, Moon } from 'lucide-react'; 
-
-const OAuthButton = ({ provider, icon, onClick }) => (
-  <button 
-    onClick={onClick}
-    className="flex items-center justify-center w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium transition-colors 
-               hover:bg-gray-100 dark:hover:bg-gray-700 
-               text-gray-800 dark:text-gray-200"
-  >
-    {icon}
-    <span className="ml-2">Sign up with {provider}</span>
-  </button>
-);
-
+import React from 'react';
+import SocialButton from '../Components/SocialButton';
+import { useNavigate } from 'react-router-dom';
+import { ToastContainer, toast } from 'react-toastify';
 const SignUpPage = () => {
-  const [isDarkMode, setIsDarkMode] = useState(
-    localStorage.getItem('theme') === 'dark' || 
-    (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)
-  );
-
-  useEffect(() => {
-    if (isDarkMode) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [isLoading, setIsloading] = useState(false)
+  const navigate = useNavigate();
+  const isValid = () => {
+    if (!email) {
+      toast.error("Email is required");
+      return false;
     }
-  }, [isDarkMode]); // Re-run effect when isDarkMode changes
-
-  const [formData, setFormData] = useState({
-    username: '',
-    email: '',
-    password: '',
-  });
-
-  const handleInputChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      toast.error('Please enter a valid email address.');
+      return false;
+    }
+    if (!password) {
+      toast.error('Password is Required');
+      return false;
+    }
+    return true;
   };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    console.log('Sign Up Data:', formData);
-    // TODO: Implement your MERN stack API call here
-  };
-
-  const toggleDarkMode = () => {
-    setIsDarkMode(prev => !prev);
-  };
-
   return (
-    // Use min-h-screen on the outer container for full height
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900 transition-colors duration-300 p-4">
-      
-      {/* Dark Mode Toggle - Placed strategically */}
-      <button
-        onClick={toggleDarkMode}
-        className="absolute top-4 right-4 p-2 rounded-full 
-                   bg-white dark:bg-gray-800 
-                   text-gray-800 dark:text-gray-300 
-                   shadow-md hover:ring-2 hover:ring-indigo-500 transition-colors"
-        aria-label="Toggle Dark Mode"
-      >
-        {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
-      </button>
+    <>
+      <div className="h-screen flex items-center justify-center bg-gray-900 p-4">
 
-      {/* Main Form Container - Responsive width */}
-      <div className="w-full max-w-sm md:max-w-md p-8 space-y-8 
-                      bg-white dark:bg-gray-800 
-                      rounded-xl shadow-2xl transition-colors duration-300">
-        
-        {/* Logo and Title */}
-        <div className="text-center">
-          <h1 className="text-4xl font-extrabold text-indigo-600 dark:text-indigo-400">
-            Lumina-studio
-          </h1>
-          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-            Create your account to start editing.
-          </p>
-        </div>
+        <div className="w-full max-w-md bg-gray-800 rounded-2xl shadow-2xl shadow-cyan-900/50 p-10 space-y-7 border border-gray-700">
 
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          
-          {/* Form Inputs (Improved Dark Mode/Focus styling) */}
-          {/* Username Input */}
-          <div className="relative">
-            <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" size={18} />
-            <input
-              id="username"
-              name="username"
-              type="text"
-              required
-              placeholder="Username"
-              value={formData.username}
-              onChange={handleInputChange}
-              className="w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 
-                         text-gray-900 dark:text-white 
-                         bg-gray-50 dark:bg-gray-700 
-                         rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors sm:text-sm"
-            />
+
+          <div className="text-center">
+            <h2 className='text-3xl font-extrabold text-cyan-400 mb-1'>Lumina-Studio</h2>
+            <p className="mt-3 text-md text-gray-400">
+              Welcome! Please fill in the details to get started.
+            </p>
           </div>
 
-          {/* Email Input */}
-          <div className="relative">
-            <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" size={18} />
-            <input
-              id="email-address"
-              name="email"
-              type="email"
-              autoComplete="email"
-              required
-              placeholder="Email address"
-              value={formData.email}
-              onChange={handleInputChange}
-              className="w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 
-                         text-gray-900 dark:text-white 
-                         bg-gray-50 dark:bg-gray-700 
-                         rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors sm:text-sm"
-            />
-          </div>
 
-          {/* Password Input */}
-          <div className="relative">
-            <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" size={18} />
-            <input
-              id="password"
-              name="password"
-              type="password"
-              autoComplete="new-password"
-              required
-              placeholder="Password"
-              value={formData.password}
-              onChange={handleInputChange}
-              className="w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 
-                         text-gray-900 dark:text-white 
-                         bg-gray-50 dark:bg-gray-700 
-                         rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors sm:text-sm"
-            />
-          </div>
-          
-          {/* Sign Up Button */}
-          <div>
+          <div className="space-y-5">
+            <div>
+              <label className="block text-sm font-semibold text-gray-300">Username</label>
+              <input
+                type="text"
+                placeholder="Enter your Username"
+                className="mt-1 block w-full px-4 py-2.5 border border-gray-600 rounded-xl shadow-inner text-white bg-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition duration-150 text-base"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-300">Email address</label>
+              <input
+                type="email"
+                placeholder="Enter your email address"
+                className="mt-1 block w-full px-4 py-2.5 border border-gray-600 rounded-xl shadow-inner text-white bg-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition duration-150 text-base"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-300">Password</label>
+              <div className="relative">
+                <input
+                  type="password"
+                  placeholder="Enter your password"
+                  className="mt-1 block w-full px-4 py-2.5 border border-gray-600 rounded-xl shadow-inner text-white bg-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition duration-150 text-base pr-10"
+                />
+                <span className="absolute inset-y-0 right-0 flex items-center pr-3 cursor-pointer text-gray-500">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10 12a2 2 0 100-4 2 2 0 000 4z" /><path fillRule="evenodd" d="M.458 10C1.725 5.556 5.862 3 10 3s8.275 2.556 9.542 7c-1.267 4.444-5.404 7-9.542 7S1.725 14.444.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" /></svg>
+                </span>
+              </div>
+            </div>
+
             <button
-              type="submit"
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-lg text-white 
-                         bg-indigo-600 hover:bg-indigo-700 
-                         focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800 transition-colors"
+              className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-xl shadow-lg text-md font-bold text-gray-900 bg-cyan-400 hover:bg-cyan-300 focus:outline-none focus:ring-4 focus:ring-offset-2 focus:ring-cyan-600 focus:ring-offset-gray-800 transition duration-200"
             >
-              Sign up
+              Continue &rsaquo;
             </button>
           </div>
-        </form>
 
-        {/* Separator */}
-        <div className="flex items-center justify-center">
-          <span className="w-full border-t border-gray-300 dark:border-gray-600"></span>
-          <span className="px-3 text-xs text-gray-500 dark:text-gray-400 uppercase">OR</span>
-          <span className="w-full border-t border-gray-300 dark:border-gray-600"></span>
-        </div>
+          <div className="flex items-center">
+            <div className="grow border-t border-gray-700"></div>
+            <span className="shrink mx-4 text-gray-500 text-sm font-medium">or</span>
+            <div className="grow border-t border-gray-700"></div>
+          </div>
 
-        {/* OAuth Buttons */}
-        <div className="space-y-3">
-          {/* Replace SVG icons with Lucide (if available) or proper icons */}
-          <OAuthButton provider="Google"  onClick={() => console.log('OAuth Google')} />
-          <OAuthButton provider="GitHub"  onClick={() => console.log('OAuth GitHub')} />
-        </div>
+          <div className="flex space-x-4">
+            <SocialButton provider="github" />
+            <SocialButton provider="google" />
+          </div>
 
-        <div className="text-sm text-center">
-          <a href="/auth/signin" className="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300">
-            Already have an account? Sign In
-          </a>
+          <div className="text-center pt-2">
+            <p className="text-sm text-gray-400">
+              Already have an account? {' '}
+
+              <a
+                href="/auth/signin"
+                className="font-bold text-cyan-400 hover:text-cyan-300 transition duration-150"
+              >
+                Sign in
+              </a>
+            </p>
+          </div>
+
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

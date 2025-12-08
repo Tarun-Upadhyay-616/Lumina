@@ -1,159 +1,128 @@
-import React, { useState, useEffect } from 'react';
-import { Mail, Lock, Sun, Moon } from 'lucide-react';
-
-// Reusable component for OAuth buttons
-const OAuthButton = ({ provider, icon, onClick }) => (
-  <button 
-    onClick={onClick}
-    className="flex items-center justify-center w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium transition-colors 
-               hover:bg-gray-100 dark:hover:bg-gray-700 
-               text-gray-800 dark:text-gray-200"
-  >
-    {icon}
-    <span className="ml-2">Sign in with {provider}</span>
-  </button>
-);
+import React, { useState } from 'react';
+import SocialButton from '../Components/SocialButton';
+import { useNavigate } from 'react-router-dom';
+import { ToastContainer, toast } from 'react-toastify';
+import { apiClient } from '../api-client';
+import { SIGNINROUTE } from '../RoutesConstants';
 
 const SignInPage = () => {
-  // Use a state to track dark mode locally
-  const [isDarkMode, setIsDarkMode] = useState(
-    localStorage.getItem('theme') === 'dark' || 
-    (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)
-  );
-
-  useEffect(() => {
-    // Apply or remove the 'dark' class on the HTML element
-    if (isDarkMode) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
+  const navigate = useNavigate();
+  const isValid = () => {
+    if (!email) {
+      toast.error("Email is required");
+      return false;
     }
-  }, [isDarkMode]);
-
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-  });
-
-  const handleInputChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      toast.error('Please enter a valid email address.');
+      return false;
+    }
+    if (!password) {
+      toast.error('Password is Required');
+      return false;
+    }
+    return true;
   };
+  const handleLogin = async () => {
+    if (!isValid()) return;
+    setIsLoading(true);
+    try {
+      const response = await apiClient.post(SIGNINROUTE, { email, password }, { withCredentials: true });
+      const user = response.data.user;
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    console.log('Sign In Data:', formData);
-    // TODO: Implement your MERN stack API call here
+      if (user) {
+        toast.success('Login successful! Redirecting...'); 
+      } else {
+
+        toast.error(response.data?.message || 'Login failed. Please check your credentials.');
+      }
+    } catch (err) {
+      console.error('Login error:', err);
+      if (err.response) {
+         toast.error(err.response.data?.message || 'Invalid credentials or server error.');
+      } else if (err.request) {
+         toast.error('No response from server. Please check your connection.');
+      } else {
+         toast.error('Login failed due to an unexpected error.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
-
-  const toggleDarkMode = () => {
-    setIsDarkMode(prev => !prev);
-  };
-
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900 transition-colors duration-300 p-4">
-
-      {/* Dark Mode Toggle */}
-      <button
-        onClick={toggleDarkMode}
-        className="absolute top-4 right-4 p-2 rounded-full 
-                   bg-white dark:bg-gray-800 
-                   text-gray-800 dark:text-gray-300 
-                   shadow-md hover:ring-2 hover:ring-indigo-500 transition-colors"
-        aria-label="Toggle Dark Mode"
-      >
-        {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
-      </button>
-
-      {/* Main Form Container - Responsive width */}
-      <div className="w-full max-w-sm md:max-w-md p-8 space-y-8 
-                      bg-white dark:bg-gray-800 
-                      rounded-xl shadow-2xl transition-colors duration-300">
-        
-        {/* Logo and Title */}
-        <div className="text-center">
-          <h1 className="text-4xl font-extrabold text-indigo-600 dark:text-indigo-400">
-            Lumina-studio
-          </h1>
-          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-            Welcome back! Please sign in to continue.
-          </p>
-        </div>
-
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          
-          {/* Email Input */}
-          <div className="relative">
-            <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" size={18} />
-            <input
-              id="email-address"
-              name="email"
-              type="email"
-              autoComplete="email"
-              required
-              placeholder="Email address"
-              value={formData.email}
-              onChange={handleInputChange}
-              className="w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 
-                         text-gray-900 dark:text-white 
-                         bg-gray-50 dark:bg-gray-700 
-                         rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors sm:text-sm"
-            />
+    <>
+    <ToastContainer theme='dark' position='top-right' autoClose={3000}/>
+      <div className="min-h-screen flex items-center justify-center bg-gray-900 p-4">
+        <div className="w-full max-w-md bg-gray-800 rounded-2xl shadow-2xl shadow-cyan-900/50 p-10 space-y-7 border border-gray-700">
+          <div className="text-center">
+            <h2 className='text-3xl font-extrabold text-cyan-400 mb-1'>Lumina-Studio</h2>
+            <p className="mt-2 text-md text-gray-400">
+              Welcome back! Please sign in to continue
+            </p>
           </div>
-
-          {/* Password Input */}
-          <div className="relative">
-            <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" size={18} />
-            <input
-              id="password"
-              name="password"
-              type="password"
-              autoComplete="current-password"
-              required
-              placeholder="Password"
-              value={formData.password}
-              onChange={handleInputChange}
-              className="w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 
-                         text-gray-900 dark:text-white 
-                         bg-gray-50 dark:bg-gray-700 
-                         rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors sm:text-sm"
-            />
-          </div>
-          
-          {/* Sign In Button */}
-          <div>
+          <div className="space-y-5">
+            <div>
+              <label htmlFor="email" className="block text-sm font-semibold text-gray-300">Email address</label>
+              <input
+                id="email"
+                type="email"
+                placeholder="Enter your email address"
+                autoComplete="off"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="mt-1 block w-full px-4 py-2.5 border border-gray-600 rounded-xl shadow-inner text-white bg-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition duration-150 text-base"
+              />
+            </div>
+            <div >
+              <label htmlFor="password" className="block text-sm font-semibold text-gray-300">Password</label>
+              <input
+                id="password"
+                type="password"
+                placeholder="Enter your email address"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="mt-1 block w-full px-4 py-2.5 border border-gray-600 rounded-xl shadow-inner text-white bg-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition duration-150 text-base"
+              />
+            </div>
             <button
-              type="submit"
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-lg text-white 
-                         bg-indigo-600 hover:bg-indigo-700 
-                         focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800 transition-colors"
+              className="w-full flex justify-center py-2.5 px-4  border border-transparent rounded-xl shadow-lg text-md font-bold text-gray-900 bg-cyan-400 hover:bg-cyan-300 focus:outline-none focus:ring-4 focus:ring-offset-2 focus:ring-cyan-600 focus:ring-offset-gray-800 transition duration-200"
+              onClick={handleLogin}
             >
-              Sign in
+              {isLoading ? "" : "Continue"}
             </button>
           </div>
-        </form>
+          <div className="flex items-center">
+            <div className="grow border-t border-gray-700"></div>
+            <span className="shrink mx-4 text-gray-500 text-sm font-medium">or</span>
+            <div className="grow border-t border-gray-700"></div>
+          </div>
+          <div className="flex space-x-4">
+            <SocialButton provider="github" />
+            <SocialButton provider="google" />
+          </div>
 
-        {/* Separator */}
-        <div className="flex items-center justify-center">
-          <span className="w-full border-t border-gray-300 dark:border-gray-600"></span>
-          <span className="px-3 text-xs text-gray-500 dark:text-gray-400 uppercase">OR</span>
-          <span className="w-full border-t border-gray-300 dark:border-gray-600"></span>
-        </div>
 
-        {/* OAuth Buttons */}
-        <div className="space-y-3">
-          <OAuthButton provider="Google" onClick={() => console.log('OAuth Google')} />
-          <OAuthButton provider="GitHub" onClick={() => console.log('OAuth GitHub')} />
-        </div>
 
-        <div className="text-sm text-center">
-          <a href="/auth/signup" className="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300">
-            Don't have an account? Sign Up
-          </a>
+          <div className="text-center pt-2">
+            <p className="text-sm text-gray-400">
+              Don't have an account? {' '}
+
+              <a
+                href="/signup"
+                className="font-bold text-cyan-400 hover:text-cyan-300 transition duration-150"
+              >
+                Sign up
+              </a>
+            </p>
+          </div>
+
+
         </div>
       </div>
-    </div>
+    </>
   );
 };
 
