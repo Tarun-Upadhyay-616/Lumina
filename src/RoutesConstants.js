@@ -1,3 +1,3 @@
 const HOST = import.meta.env.VITE_SERVER_URL
-export const SIGINROUTE = `${HOST}/auth/signin`
-export const SIGUPROUTE = `${HOST}/auth/signup`
+export const SIGNINROUTE = `${HOST}/api/auth/signin`
+export const SIGUPROUTE = `${HOST}/api/auth/signup`
