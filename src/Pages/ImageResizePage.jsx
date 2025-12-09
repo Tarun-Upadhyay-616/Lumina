@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { RESIZEROUTE } from '../RoutesConstants';
+import { apiClient } from './../api-client';
 
 const Navbar = () => (
   <nav className="bg-gray-800 border-b border-cyan-800/50 shadow-md shadow-cyan-900/30">
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div className="flex justify-between items-center h-16">
-        <div className="flex-shrink-0">
+        <div className="shrink-0">
           <span className="text-xl font-extrabold text-cyan-400 tracking-wider">
             LUMINA-STUDIO
           </span>
@@ -12,41 +14,44 @@ const Navbar = () => (
         <div className="flex space-x-4">
           <a href="/" className="text-gray-300 hover:text-cyan-400 transition duration-150">Home</a>
           <a href="#" className="text-gray-300 hover:text-cyan-400 transition duration-150">Gallery</a>
-          <a href="#" className="text-cyan-400 font-bold transition duration-150">Resize Tool</a>
+          <a href="#" className="text-cyan-400 font-bold transition duration-150">Tools</a>
         </div>
       </div>
     </div>
   </nav>
 );
 
-const InputField = ({ label, id, placeholder, unit = 'px' }) => (
-  <div>
-    <label htmlFor={id} className="block text-sm font-semibold text-gray-300 mb-1">
-      {label}
-    </label>
-    <div className="relative">
-      <input
-        type="number"
-        id={id}
-        placeholder={placeholder}
-        min="1"
-    
-        className="block w-full px-4 py-2 bg-gray-700 text-white border border-gray-600 rounded-xl placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition duration-150"
-      />
-      
-      <span className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 text-sm">
-        {unit}
-      </span>
-    </div>
-  </div>
-);
 
 const ImageResizePage = () => {
+  const [image, setImage] = useState(null)
+  const [width, setWidth] = useState('')
+  const [height, setHeight] = useState('')
+  const [size, setSize] = useState('')
+  const [previewUrl, setPreviewUrl] = useState('')
+  const handleImageChange = async (event) => {
+    const file = event.target.files[0]
+    if (file) {
+      setImage(file)
+    }
+  }
+  useEffect(() => {
+    if (!image) {
+      setPreviewUrl('');
+      return;
+    }
+    const objectUrl = URL.createObjectURL(image);
+    setPreviewUrl(objectUrl);
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [image]);
+  const ResizeImage = async () => {
+    const response = await apiClient.post(RESIZEROUTE, { width, height ,size }, { withCredentials: true })
+    console.log(response);
+  }
   return (
-    
+
     <div className="min-h-screen bg-gray-900">
       <Navbar />
-      
+
       <div className="max-w-5xl mx-auto py-10 px-4 sm:px-6 lg:px-8">
         <header className="mb-8 text-center">
           <h1 className="text-4xl font-extrabold text-white mb-2">
@@ -58,21 +63,21 @@ const ImageResizePage = () => {
         </header>
 
         <div className="flex flex-col lg:flex-row lg:space-x-8">
-          
+
 
           <div className="lg:w-2/3 mb-8 lg:mb-0">
             <div className="bg-gray-800 p-8 rounded-2xl border border-gray-700 shadow-2xl shadow-cyan-900/40 h-full">
               <h2 className="text-xl font-semibold text-white mb-4 border-b border-gray-700/50 pb-2">
-                Upload Image
+                {!image ? "Upload Image" : image.name}
               </h2>
-              
-              <div className="flex items-center justify-center w-full">
-                <label 
-                  htmlFor="dropzone-file" 
+
+              {!image ? (<div className="flex items-center justify-center w-full">
+                <label
+                  htmlFor="dropzone-file"
                   className="flex flex-col items-center justify-center w-full h-64 border-2 border-dashed border-cyan-600 rounded-xl cursor-pointer bg-gray-700/50 hover:bg-gray-700 transition duration-200"
                 >
                   <div className="flex flex-col items-center justify-center pt-5 pb-6">
-      
+
                     <svg className="w-10 h-10 mb-3 text-cyan-400 drop-shadow-[0_0_8px_rgba(45,212,255,0.7)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 014 4v2m-5 4l-4-4m0 0l-4 4m4-4v12"></path></svg>
                     <p className="mb-2 text-sm text-gray-300">
                       <span className="font-semibold text-cyan-400">Click to upload</span> or drag and drop
@@ -81,11 +86,14 @@ const ImageResizePage = () => {
                       PNG, JPG, or GIF (Max 10MB)
                     </p>
                   </div>
-                  <input id="dropzone-file" type="file" className="hidden" accept="image/*" />
+                  <input id="dropzone-file" type="file" className="hidden" accept="image/*" onChange={handleImageChange} />
                 </label>
-              </div>
-              
-          
+              </div>)
+                : (<div className="flex items-center justify-center w-full">
+                  <img src={previewUrl} alt="" />
+                </div>)}
+
+
             </div>
           </div>
 
@@ -94,21 +102,72 @@ const ImageResizePage = () => {
               <h2 className="text-xl font-semibold text-white mb-4 border-b border-gray-700/50 pb-2">
                 Resize Settings
               </h2>
-
-              <InputField label="Width" id="width" placeholder="e.g., 800" unit="px" />
-              <InputField label="Height" id="height" placeholder="e.g., 600" unit="px" />
-              
-   
-              <div className="flex items-center py-2">
-                <div className="flex-grow border-t border-gray-700/50"></div>
-                <span className="flex-shrink mx-4 text-gray-500 text-sm font-medium">Target</span>
-                <div className="flex-grow border-t border-gray-700/50"></div>
+              <div>
+                <label htmlFor="width" className="block text-sm font-semibold text-gray-300 mb-1">
+                  Width
+                </label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    id="width"
+                    placeholder="e.g., 800"
+                    min="1"
+                    onChange={(e) => setWidth(e.target.value)}
+                    className="block w-full px-4 py-2 bg-gray-700 text-white border border-gray-600 rounded-xl placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition duration-150"
+                  />
+                  <span className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 text-sm">
+                    px
+                  </span>
+                </div>
               </div>
-              
-              <InputField label="File Size" id="filesize" placeholder="e.g., 500" unit="KB" />
+              {console.log(width)}
+              <div>
+                <label htmlFor="height" className="block text-sm font-semibold text-gray-300 mb-1">
+                  Height
+                </label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    id="height"
+                    placeholder="e.g., 600"
+                    min="1"
+                    onChange={(e) => setHeight(e.target.value)}
+                    className="block w-full px-4 py-2 bg-gray-700 text-white border border-gray-600 rounded-xl placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition duration-150"
+                  />
+                  <span className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 text-sm">
+                    px
+                  </span>
+                </div>
+              </div>
+              {console.log(height)}
+
+
+              <div className="flex items-center py-2">
+                <div className="grow border-t border-gray-700/50"></div>
+                <span className="shrink mx-4 text-gray-500 text-sm font-medium">Target</span>
+                <div className="grow border-t border-gray-700/50"></div>
+              </div>
+              <div>
+                <label htmlFor="filesize" className="block text-sm font-semibold text-gray-300 mb-1">
+                File Size
+                </label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    id="filesize"
+                    placeholder="e.g., 500"
+                    min="1"
+                    onChange={(e) => setSize(e.target.value)}
+                    className="block w-full px-4 py-2 bg-gray-700 text-white border border-gray-600 rounded-xl placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition duration-150"
+                  />
+                  <span className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 text-sm">
+                    KB
+                  </span>
+                </div>
+              </div>
 
               <button
-                className="w-full flex justify-center py-3 px-4 mt-6 border border-transparent rounded-xl shadow-lg text-md font-bold text-gray-900 bg-cyan-400 hover:bg-cyan-300 focus:outline-none focus:ring-4 focus:ring-offset-2 focus:ring-cyan-600 focus:ring-offset-gray-800 transition duration-200"
+                className="w-full flex justify-center py-3 px-4 mt-6 border border-transparent rounded-xl shadow-lg text-md font-bold text-gray-900 bg-cyan-400 hover:bg-cyan-300 focus:outline-none focus:ring-4 focus:ring-offset-2 focus:ring-cyan-600 focus:ring-offset-gray-800 transition duration-200" onClick={ResizeImage}
               >
                 Resize and Download
               </button>

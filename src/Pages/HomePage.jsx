@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { Children } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 
 
@@ -6,7 +7,7 @@ const Navbar = () => (
   <nav className="bg-gray-800 border-b border-cyan-800/50 shadow-md shadow-cyan-900/30 sticky top-0 z-50">
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div className="flex justify-between items-center h-20">
-        <div className="flex-shrink-0">
+        <div className="shrink-0">
           <span className="text-xl sm:text-2xl font-extrabold text-cyan-400 tracking-wider drop-shadow-[0_0_5px_rgba(45,212,255,0.5)]">
             LUMINA-STUDIO
           </span>
@@ -71,6 +72,7 @@ const TestimonialCard = ({ quote, name, title }) => (
 
 
 const HomePage = () => {
+  const navigate = useNavigate()
   return (
     <div className="min-h-screen bg-gray-900 text-white">
       <Navbar />
@@ -101,7 +103,7 @@ const HomePage = () => {
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-            <FeatureCard
+            <FeatureCard 
               title="Smart Resizing"
               description="Instantly change dimensions and optimize file size without losing quality."
               icon="⚡"
