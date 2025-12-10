@@ -1,6 +1,7 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { RESIZEROUTE } from '../RoutesConstants';
 import { apiClient } from './../api-client';
+import { IoIosClose } from 'react-icons/io';
 
 const Navbar = () => (
   <nav className="bg-gray-800 border-b border-cyan-800/50 shadow-md shadow-cyan-900/30">
@@ -28,12 +29,14 @@ const ImageResizePage = () => {
   const [height, setHeight] = useState('')
   const [size, setSize] = useState('')
   const [previewUrl, setPreviewUrl] = useState('')
+
   const handleImageChange = async (event) => {
     const file = event.target.files[0]
     if (file) {
       setImage(file)
     }
   }
+
   useEffect(() => {
     if (!image) {
       setPreviewUrl('');
@@ -43,10 +46,43 @@ const ImageResizePage = () => {
     setPreviewUrl(objectUrl);
     return () => URL.revokeObjectURL(objectUrl);
   }, [image]);
+
   const ResizeImage = async () => {
-    const response = await apiClient.post(RESIZEROUTE, { width, height ,size }, { withCredentials: true })
-    console.log(response);
+
+    if (!image || (!width && !height)) {
+      alert("Please select an image and enter dimension settings.");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('image', image); 
+
+    if (width) formData.append('width', width);
+    if (height) formData.append('height', height);
+    if (size) formData.append('size', size);
+
+    try {
+      const response = await apiClient.post(RESIZEROUTE, formData, {
+        responseType: "blob",
+      });
+      console.log(response.data)
+      const urlBlob = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = urlBlob;
+      link.setAttribute("download", previewUrl);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(urlBlob);
+
+      console.log("Image downloaded successfully!");
+
+    } catch (error) {
+      console.error("Resize failed:", error);
+      alert("Resize failed. Check server logs for details.");
+    }
   }
+
   return (
 
     <div className="min-h-screen bg-gray-900">
@@ -67,8 +103,9 @@ const ImageResizePage = () => {
 
           <div className="lg:w-2/3 mb-8 lg:mb-0">
             <div className="bg-gray-800 p-8 rounded-2xl border border-gray-700 shadow-2xl shadow-cyan-900/40 h-full">
-              <h2 className="text-xl font-semibold text-white mb-4 border-b border-gray-700/50 pb-2">
+              <h2 className="text-xl font-semibold text-white mb-4 border-b border-gray-700/50 pb-2 flex gap-5 justify-between">
                 {!image ? "Upload Image" : image.name}
+                {image && <IoIosClose className='text-red-500 text-4xl flex justify-center items-center' onClick={() => setImage(null)} />}
               </h2>
 
               {!image ? (<div className="flex items-center justify-center w-full">
@@ -90,7 +127,7 @@ const ImageResizePage = () => {
                 </label>
               </div>)
                 : (<div className="flex items-center justify-center w-full">
-                  <img src={previewUrl} alt="" />
+                  <img src={previewUrl} alt="Image Preview" />
                 </div>)}
 
 
@@ -120,7 +157,7 @@ const ImageResizePage = () => {
                   </span>
                 </div>
               </div>
-              {console.log(width)}
+
               <div>
                 <label htmlFor="height" className="block text-sm font-semibold text-gray-300 mb-1">
                   Height
@@ -139,7 +176,7 @@ const ImageResizePage = () => {
                   </span>
                 </div>
               </div>
-              {console.log(height)}
+
 
 
               <div className="flex items-center py-2">
@@ -149,7 +186,7 @@ const ImageResizePage = () => {
               </div>
               <div>
                 <label htmlFor="filesize" className="block text-sm font-semibold text-gray-300 mb-1">
-                File Size
+                  File Size
                 </label>
                 <div className="relative">
                   <input
