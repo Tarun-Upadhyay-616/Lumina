@@ -11,8 +11,10 @@
   },
   "dependencies": {
     "@clerk/clerk-react": "^5.58.0",
+    "@imagekit/react": "^5.0.1",
     "@tailwindcss/vite": "^4.1.17",
     "axios": "^1.13.2",
+    "fabric": "^6.9.0",
     "lucide-react": "^0.556.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
