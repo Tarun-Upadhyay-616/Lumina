@@ -1,14 +1,14 @@
 // src/components/ImageResizePage.jsx
 
 import React, { useEffect, useState, useMemo } from 'react';
-// import { RESIZEROUTE } from '../RoutesConstants'; // Assuming route is defined below
-import { apiClient } from './../api-client'; // Assumes apiClient is defined
+import { apiClient } from './../api-client'; 
 import { IoIosClose } from 'react-icons/io';
 import LoadingIcons from 'react-loading-icons';
 import { HOST } from '../Constants';
+import { RESIZEROUTE } from '../RoutesConstants';
 
-// Placeholder for HOST if it's not defined elsewhere:
-const RESIZE_ENDPOINT = '/edit/resize-image'; // Use the correct endpoint defined in your Express setup
+
+; 
 
 const Navbar = () => (
   <nav className="bg-gray-800 border-b border-cyan-800/50 shadow-md shadow-cyan-900/30">
@@ -33,8 +33,8 @@ const Navbar = () => (
 const ImageResizePage = () => {
   const [image, setImage] = useState(null);
   const [resizeType, setResizeType] = useState('dimension');
-  const [width, setWidth] = useState(''); // Stores current/original width
-  const [height, setHeight] = useState(''); // Stores current/original height
+  const [width, setWidth] = useState(''); 
+  const [height, setHeight] = useState(''); 
   const [targetSizeKB, setTargetSizeKB] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState('');
@@ -46,7 +46,7 @@ const ImageResizePage = () => {
     const file = event.target.files[0];
 
     if (file && file.type.startsWith('image/')) {
-      // --- Get and Set Original Dimensions ---
+
       const objectUrl = URL.createObjectURL(file);
       const img = new Image();
       img.src = objectUrl;
@@ -55,7 +55,6 @@ const ImageResizePage = () => {
         const currentWidth = img.naturalWidth;
         const currentHeight = img.naturalHeight;
 
-        // Set the original dimensions as the default input values
         setWidth(currentWidth.toString());
         setHeight(currentHeight.toString());
 
@@ -66,7 +65,6 @@ const ImageResizePage = () => {
         URL.revokeObjectURL(objectUrl);
         console.error("Error loading image for dimension check.");
       };
-      // ------------------------------------------
 
       setImage(file);
       setResizedPath(null);
@@ -120,7 +118,7 @@ const ImageResizePage = () => {
     setIsLoading(true);
     try {
 
-      const response = await apiClient.post(RESIZE_ENDPOINT, formData, {
+      const response = await apiClient.post(RESIZEROUTE, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
 
@@ -166,7 +164,6 @@ const ImageResizePage = () => {
               </h2>
 
               {!image ? (
-                // --- File Upload Area ---
                 <div className="flex items-center justify-center w-full">
                   <label
                     htmlFor="dropzone-file"
