@@ -7,7 +7,7 @@ import { IoMdColorFill } from "react-icons/io";
 
 const ToolButton = ({ icon: Icon, label, onclick, isActive = false }) => (
     <button
-        onclick={onclick}
+        onClick={onclick}
         title={label}
         className={`w-full py-3 px-2 flex flex-col items-center space-y-1 rounded-lg transition-colors duration-150 
             ${isActive
@@ -31,13 +31,12 @@ const PhotoEditorLayout = () => {
         const newCanvas = new fabric.Canvas(canvasRef.current, {
             width: 800,
             height: 500,
-            backgroundColor: '#1e293b', // A slightly lighter slate to stand out
-            preserveObjectStacking: true, // Prevents items from disappearing when selected
+            backgroundColor: '#1e293b', 
+            preserveObjectStacking: true, 
             stopContextMenu: true, 
             fireRightClick: true,
         });
     
-        // CRITICAL: Force the wrapper to be visible
         const container = newCanvas.getElement().parentNode;
         if (container) {
             container.style.position = 'relative';
@@ -62,8 +61,10 @@ const PhotoEditorLayout = () => {
             width: 100,
             height: 100,
             fill: 'rgba(255, 69, 0, 0.7)',
+            // fill: 'red',
             stroke: 'white',
             strokeWidth: 2,
+            selectable: false
         });
         fabricCanvasRef.current.add(rect);
         saveHistory()
@@ -73,9 +74,10 @@ const PhotoEditorLayout = () => {
         const json = JSON.stringify(fabricCanvasRef.current.toJSON());
         const newHistory = history.slice(0, historyIndex + 1);
         newHistory.push(json);
-
+        
         setHistory(newHistory);
         setHistoryIndex(newHistory.length - 1);
+        // console.log(history)
     };
 
     const applyState = (index) => {
@@ -111,7 +113,7 @@ const PhotoEditorLayout = () => {
         <div className="min-h-screen flex bg-gray-900 text-white p-4">
 
 
-            <div className="w-20 bg-gray-800 rounded-2xl shadow-2xl shadow-cyan-900/50 p-4 px-2 space-y-4 border border-gray-700 flex-shrink-0">
+            <div className="w-20 bg-gray-800 rounded-2xl shadow-2xl shadow-cyan-900/50 p-4 px-2  space-y-4 border border-gray-700 flex-shrink-0">
                 <div className="text-center mb-4">
                     <h3 className='text-sm font-bold text-cyan-400'>TOOLS</h3>
                 </div>
@@ -131,8 +133,8 @@ const PhotoEditorLayout = () => {
 
 
                 <div className="space-y-3">
-                    <ToolButton icon={FaUndo} label="Undo" />
-                    <ToolButton icon={FaRedo} label="Redo" />
+                    <ToolButton icon={FaUndo} label="Undo" onclick={undo}/>
+                    <ToolButton icon={FaRedo} label="Redo" onclick={undo} />
                     <ToolButton icon={FaTrash} label="Delete" />
                 </div>
             </div>
