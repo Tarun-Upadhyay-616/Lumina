@@ -25,32 +25,59 @@ const PhotoEditorLayout = () => {
     const [historyIndex, setHistoryIndex] = useState(-1);
     const canvasRef = useRef(null)
     const fabricCanvasRef = useRef(null)
+    let isDrawing = false
+    let StartX, StartY, rect
+
     useEffect(() => {
         if (!canvasRef.current || fabricCanvasRef.current) return;
-    
-        const newCanvas = new fabric.Canvas(canvasRef.current, {
+
+        fabricCanvasRef.current = new fabric.Canvas(canvasRef.current, {
             width: 800,
             height: 500,
-            backgroundColor: '#1e293b', 
-            preserveObjectStacking: true, 
-            stopContextMenu: true, 
-            fireRightClick: true,
+            backgroundColor: '#1e293b',
+            preserveObjectStacking: true,
         });
-    
-        const container = newCanvas.getElement().parentNode;
-        if (container) {
-            container.style.position = 'relative';
-            container.style.zIndex = '10';
-            container.style.boxShadow = '0 20px 25px -5px rgba(0, 0, 0, 0.5)';
-            container.style.borderRadius = '8px';
-        }
-    
-        fabricCanvasRef.current = newCanvas;
-        newCanvas.renderAll();
-    
+        const canvas = fabricCanvasRef.current
+        canvas.on('mouse:down', (opt) => {
+            isDrawing = true
+            const pointer = canvas.getPointer(opt.e)
+            StartX = pointer.x
+            StartY = pointer.y
+            rect = new fabric.Rect({
+                left: StartX,
+                top: StartY,
+                width: 0,
+                height: 0,
+                fill: isTransparent,
+                stroke: 'white',
+                strokeWidth: 2,
+                selectable: false
+            })
+            canvas.add(rect)
+        })
+        canvas.on('mouse:move', (opt) => {
+            if (!isDrawing) return
+            const pointer = canvas.getPointer(opt.e)
+            rect.set({
+                width: Math.abs(StartX - pointer.x),
+                height: Math.abs(StartY - pointer.y)
+            })
+            if (StartX > pointer.x) {
+                rect.set({ left: pointer.x })
+            }
+            if (StartY > pointer.y) {
+                rect.set({ top: pointer.y })
+            }
+
+            canvas.renderAll()
+        })
+        canvas.on('mouse:up',()=>{
+            isDrawing = false
+            rect.setCoords()
+        })
+
         return () => {
-            newCanvas.dispose();
-            fabricCanvasRef.current = null;
+            canvas.dispose()
         };
     }, []);
 
@@ -61,53 +88,22 @@ const PhotoEditorLayout = () => {
             width: 100,
             height: 100,
             fill: 'rgba(255, 69, 0, 0.7)',
-            // fill: 'red',
             stroke: 'white',
             strokeWidth: 2,
             selectable: false
         });
         fabricCanvasRef.current.add(rect);
-        saveHistory()
     }
-    const saveHistory = () => {
-        if (!fabricCanvasRef.current) return;
-        const json = JSON.stringify(fabricCanvasRef.current.toJSON());
-        const newHistory = history.slice(0, historyIndex + 1);
-        newHistory.push(json);
-        
-        setHistory(newHistory);
-        setHistoryIndex(newHistory.length - 1);
-        // console.log(history)
-    };
-
-    const applyState = (index) => {
-        if (index >= 0 && index < history.length) {
-            const json = history[index];
-            fabricCanvasRef.current.loadFromJSON(json, () => {
-                fabricCanvasRef.current.renderAll();
-            });
-            setHistoryIndex(index);
-        }
-    };
-
-    const undo = () => applyState(historyIndex - 1);
-    const redo = () => applyState(historyIndex + 1);
-    useEffect(() => {
-        const canvas = fabricCanvasRef.current;
-        if (canvas) {
-            canvas.on('object:modified', saveHistory);
-            canvas.on('object:added', saveHistory);
-            canvas.on('object:removed', saveHistory);
-        }
-        return () => {
-            if (canvas) {
-                canvas.off('object:modified', saveHistory);
-                canvas.off('object:added', saveHistory);
-                canvas.off('object:removed', saveHistory);
-            }
-        };
-    }, [historyIndex]);
-
+    const SelectionTool = () => {
+        console.log(canvasRef.activeSelection)
+        fabricCanvasRef.current.forEachObject((obj) => {
+            obj.set({
+                selectable: true,
+                fill: "red"
+            })
+            // fabricCanvasRef.current.renderAll();
+        })
+    }
 
     return (
         <div className="min-h-screen flex bg-gray-900 text-white p-4">
@@ -120,7 +116,7 @@ const PhotoEditorLayout = () => {
 
 
                 <div className="space-y-3 overflow-y-auto h-[50vh] overflow-x-hidden">
-                    <ToolButton icon={FaMousePointer} label="Select" />
+                    <ToolButton icon={FaMousePointer} label="Select" onclick={SelectionTool} />
                     <ToolButton icon={BsBoundingBoxCircles} label="Rect" onclick={addRectangle} />
                     <ToolButton icon={FaTextHeight} label="Text" />
                     <ToolButton icon={BiImageAdd} label="Image" />
@@ -133,8 +129,8 @@ const PhotoEditorLayout = () => {
 
 
                 <div className="space-y-3">
-                    <ToolButton icon={FaUndo} label="Undo" onclick={undo}/>
-                    <ToolButton icon={FaRedo} label="Redo" onclick={undo} />
+                    <ToolButton icon={FaUndo} label="Undo" />
+                    <ToolButton icon={FaRedo} label="Redo" />
                     <ToolButton icon={FaTrash} label="Delete" />
                 </div>
             </div>
