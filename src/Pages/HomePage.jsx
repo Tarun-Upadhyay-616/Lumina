@@ -19,13 +19,13 @@ const Navbar = () => (
           <a href="/resize" className="text-cyan-400 font-bold hover:text-cyan-300 transition duration-150">Start Editing &rarr;</a>
           <a href="/signin" className="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition duration-150 border border-gray-600">Sign In</a>
         </div>
-        
 
-        <button 
+
+        <button
           className="md:hidden p-2 text-gray-300 hover:text-cyan-400"
           aria-label="Toggle Menu"
         >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
         </button>
       </div>
     </div>
@@ -50,14 +50,16 @@ const Footer = () => (
 
 
 
-const FeatureCard = ({ title, description, icon, colorClass }) => (
-  <div className={`bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-xl ${colorClass}/40 hover:shadow-2xl transition duration-300 ease-in-out`}>
+const FeatureCard = ({ title, description, icon, onclick, colorClass }) => (
+  <button onClick={onclick}>
+    <div className={`bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-xl ${colorClass}/40 hover:shadow-2xl transition duration-300 ease-in-out`}>
     <div className={`text-4xl mb-4 ${colorClass} drop-shadow-[0_0_8px_rgba(45,212,255,0.7)]`}>
       {icon}
     </div>
     <h3 className="text-xl font-bold text-white mb-2">{title}</h3>
     <p className="text-gray-400">{description}</p>
   </div>
+  </button>
 );
 
 const TestimonialCard = ({ quote, name, title }) => (
@@ -79,7 +81,7 @@ const HomePage = () => {
 
       <section className="py-20 sm:py-24 text-center border-b border-gray-800">
         <div className="max-w-4xl mx-auto px-4">
-   
+
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-tight mb-4 drop-shadow-[0_0_15px_rgba(45,212,255,0.3)]">
             Elevate Your <span className="text-cyan-400">Photos</span> Instantly
           </h1>
@@ -103,7 +105,7 @@ const HomePage = () => {
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-            <FeatureCard 
+            <FeatureCard
               title="Smart Resizing"
               description="Instantly change dimensions and optimize file size without losing quality."
               icon="⚡"
@@ -131,6 +133,7 @@ const HomePage = () => {
               title="Layered Editing"
               description="Full support for layers, allowing complex compositions and non-destructive adjustments."
               icon="🧱"
+              onclick={()=>navigate('/editor')}
               colorClass="shadow-blue-500"
             />
             <FeatureCard

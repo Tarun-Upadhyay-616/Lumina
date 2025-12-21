@@ -14,7 +14,6 @@ export const SettingsPanel = ({ selectedObject, onUpdate }) => {
     const fill = selectedObject.fill;
     const stroke = selectedObject.stroke || '#ffffff';
     const strokeWidth = selectedObject.strokeWidth || 0;
-
     const handleChange = (key, value) => {
         onUpdate(key, value);
     };
@@ -81,6 +80,7 @@ export const SettingsPanel = ({ selectedObject, onUpdate }) => {
                         value={strokeWidth}
                         onChange={(e) => handleChange('strokeWidth', parseInt(e.target.value))}
                         className="w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer"
+                        
                     />
                 </div>
             </div>
