@@ -25,6 +25,7 @@ const EditorLayout = () => {
     const canvasRef = useRef(null)
     const fabricCanvasRef = useRef(null)
     const fileref = useRef(null)
+    const textref = useRef(null)
     const [activeTool, setActiveTool] = useState('select')
     const [selectedObject, setSelectedObject] = useState('')
     const [showShapesDropdown, setShowShapesDropdown] = useState(false)
@@ -150,7 +151,7 @@ const EditorLayout = () => {
         if (!file) return
         const objectUrl = URL.createObjectURL(file);
         setImage(objectUrl);
-        event.target.value = '' 
+        event.target.value = ''
     }
     const handleImage = () => {
         fileref.current.click()
