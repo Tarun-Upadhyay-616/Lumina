@@ -323,6 +323,12 @@ const EditorLayout = () => {
             canvas.requestRenderAll()
         }
     }
+    const ColorFill = ()=>{
+        const canvas = fabricCanvasRef.current
+        const activeObj = canvas.getActiveObject()
+        const colorBucket = fabric.Color('#ffffff')
+        
+    }
     
     const handleLayerAction = (action, index) => {
          const canvas = fabricCanvasRef.current;
