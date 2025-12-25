@@ -2,106 +2,31 @@ import React, { useEffect, useRef, useState } from 'react';
 import * as fabric from 'fabric';
 import { 
     FaMousePointer, FaPencilAlt, FaShapes, FaFont, FaImage, 
-    FaLayerGroup, FaDownload, FaUndo, FaRedo, 
-    FaTrash, FaEye, FaLock, FaBold, FaItalic, FaUnderline, FaArrowUp, FaArrowDown
+    FaDownload, FaTrash, FaBold, FaItalic, 
+    FaUnderline, FaArrowUp, FaArrowDown, FaChevronDown, FaLayerGroup
 } from 'react-icons/fa';
 import { IoMdColorFilter } from "react-icons/io";
-import { RiDragDropLine, RiShadowLine } from "react-icons/ri";
 import { addRectangle, addCircle, addTriangle } from '../Components/AddShapes';
-
-const ToolButton = ({ icon: Icon, label, isActive, onClick }) => (
-    <button
-        onClick={onClick}
-        title={label}
-        className={`w-full py-3 px-2 flex flex-col items-center space-y-1 rounded-lg transition-colors duration-150 
-            ${isActive
-                ? 'bg-cyan-500 text-white shadow-lg shadow-cyan-500/50'
-                : 'text-gray-400 hover:bg-gray-700 hover:text-cyan-400'
-            }`}
-    >
-        <Icon className="text-xl" />
-        <span className="text-[10px] font-medium uppercase tracking-wider">{label}</span>
-    </button>
-);
-
-const IconButton = ({ icon: Icon, title, onClick, isActive }) => (
-    <button 
-        onClick={onClick} 
-        title={title}
-        className={`p-2 rounded-lg transition-colors ${isActive ? 'bg-cyan-500 text-white' : 'text-gray-400 hover:text-cyan-400 hover:bg-gray-700'}`}
-    >
-        <Icon />
-    </button>
-);
-
-const PropertyGroup = ({ title, children }) => (
-    <div className="border-b border-gray-700 pb-4 mb-4 last:border-0">
-        <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">{title}</h4>
-        <div className="space-y-3">
-            {children}
-        </div>
-    </div>
-);
-
-const RangeSlider = ({ label, value, onChange, min = 0, max = 100 }) => (
-    <div className="space-y-1">
-        <div className="flex justify-between text-xs text-gray-300">
-            <span>{label}</span>
-            <span className="text-cyan-400">{value}</span>
-        </div>
-        <input 
-            type="range" 
-            min={min}
-            max={max}
-            value={value}
-            onChange={onChange}
-            className="w-full h-1 bg-gray-600 rounded-lg appearance-none cursor-pointer accent-cyan-500" 
-        />
-    </div>
-);
-
-const ColorPicker = ({ label, color, onChange }) => (
-    <div className="flex items-center justify-between">
-        <span className="text-xs text-gray-300">{label}</span>
-        <div className="flex items-center space-x-2">
-            <span className="text-xs text-gray-500 uppercase">{color}</span>
-            <input 
-                type="color" 
-                value={color || '#000000'}
-                onChange={onChange}
-                className="w-6 h-6 rounded border border-gray-600 cursor-pointer bg-transparent" 
-            />
-        </div>
-    </div>
-);
-
-const InputField = ({ label, value, onChange, type = "text" }) => (
-    <div className="flex items-center justify-between space-x-2">
-        <span className="text-xs text-gray-300 whitespace-nowrap">{label}</span>
-        <input 
-            type={type} 
-            value={value || ''} 
-            onChange={onChange}
-            className="w-16 bg-gray-900 border border-gray-600 rounded px-2 py-1 text-xs text-right text-white focus:border-cyan-500 outline-none" 
-        />
-    </div>
-);
+import { ToolButton, IconButton, PropertyGroup, RangeSlider, ColorPicker, InputField } from './../Components/EditorComponents';
 
 const EditorLayout = () => {
     const canvasRef = useRef(null)
     const fabricCanvasRef = useRef(null)
+    const containerRef = useRef(null)
     const fileref = useRef(null)
+    
+    // UI States
     const [activeTool, setActiveTool] = useState('select')
-    const [activePanel, setActivePanel] = useState('properties')
     const [selectedObject, setSelectedObject] = useState(null)
     const [showShapesMenu, setShowShapesMenu] = useState(false)
-    const [layers, setLayers] = useState([]) 
-  
+    const [isPropertiesOpen, setIsPropertiesOpen] = useState(false)
+
+    // Canvas States
+    const [canvasBg, setCanvasBg] = useState('#ffffff');
     const [brushSettings, setBrushSettings] = useState({
-        stroke: '#ffffff',
-        strokeWidth: 2
+        stroke: '#000000',
+        strokeWidth: 5
     });
-    
     const [shadowSettings, setShadowSettings] = useState({
         color: '#000000',
         blur: 10,
@@ -109,19 +34,57 @@ const EditorLayout = () => {
         offsetY: 5,
         enabled: false
     });
-
     const [image, setImage] = useState(null)
 
+    // --- Canvas Logic ---
     useEffect(() => {
-        if (!canvasRef.current) return
+        if (!canvasRef.current || !containerRef.current) return
+
+        // 1. Initialize Canvas
         const canvas = new fabric.Canvas(canvasRef.current, {
             width: 800,
-            height: 500,
-            backgroundColor: '#1e293b',
+            height: 600, 
+            backgroundColor: canvasBg, 
             isDrawingMode: false,
+            preserveObjectStacking: true, 
         })
         fabricCanvasRef.current = canvas
 
+        // 2. Smart Resizing Logic
+        const resizeCanvas = () => {
+            if (!containerRef.current || !canvas) return;
+            const containerWidth = containerRef.current.clientWidth;
+            const containerHeight = containerRef.current.clientHeight;
+            
+            if (containerWidth === 0 || containerHeight === 0) return;
+
+            // Padding: Mobile = Small, Desktop = Larger
+            const paddingX = window.innerWidth < 768 ? 20 : 60;
+            const paddingY = window.innerWidth < 768 ? 80 : 60; // Extra bottom padding on mobile for toolbar
+
+            const availableWidth = containerWidth - paddingX;
+            const availableHeight = containerHeight - paddingY;
+            
+            const scaleX = availableWidth / 800;
+            const scaleY = availableHeight / 600;
+            const scale = Math.min(scaleX, scaleY, 0.95); 
+
+            // Apply CSS Transform
+            const canvasContainer = canvas.getElement().parentNode;
+            if (canvasContainer) {
+                canvasContainer.style.transform = `scale(${scale})`;
+                canvasContainer.style.transformOrigin = 'center center';
+                canvasContainer.style.border = '1px solid #334155'; 
+                canvasContainer.style.boxShadow = '0 10px 30px rgba(0,0,0,0.5)';
+            }
+            
+            canvas.renderAll();
+        };
+
+        const resizeObserver = new ResizeObserver(() => resizeCanvas());
+        resizeObserver.observe(containerRef.current);
+
+        // 3. Selection Handlers
         const updateSelection = () => {
             if (canvas.isDrawingMode) return
             const active = canvas.getActiveObject()
@@ -135,109 +98,85 @@ const EditorLayout = () => {
                     offsetX: s ? s.offsetX : 5,
                     offsetY: s ? s.offsetY : 5
                 });
-                setSelectedObject({ ...active }) 
+                setSelectedObject({ ...active })
+                if(window.innerWidth < 768) setIsPropertiesOpen(true); 
             } else {
                 setSelectedObject(null)
+                if (activeTool !== 'draw') setIsPropertiesOpen(false);
             }
-        }
-
-        const updateLayers = () => {
-            
-            const objs = canvas.getObjects();
-            setLayers([...objs].reverse()); 
         }
 
         canvas.on('selection:created', updateSelection)
         canvas.on('selection:updated', updateSelection)
         canvas.on('selection:cleared', updateSelection)
-        canvas.on('object:modified', updateSelection)
-        canvas.on('object:scaling', updateSelection)
+        canvas.on('object:modified', () => updateSelection())
 
-        canvas.on('object:added', updateLayers)
-        canvas.on('object:removed', updateLayers)
-        canvas.on('object:modified', updateLayers)
+        // 4. Force Render on Mount (Fixes white area issue)
+        resizeCanvas();
+        setTimeout(() => {
+            resizeCanvas();
+            canvas.renderAll();
+        }, 100);
 
         return () => {
+            resizeObserver.disconnect();
             canvas.dispose()
             fabricCanvasRef.current = null
         }
-    }, [])
+    }, []) 
+
+    // Update background color if state changes
+    useEffect(() => {
+        if (fabricCanvasRef.current) {
+            fabricCanvasRef.current.backgroundColor = canvasBg;
+            fabricCanvasRef.current.requestRenderAll();
+        }
+    }, [canvasBg]);
 
     useEffect(() => {
         const canvas = fabricCanvasRef.current
         if (!canvas || !image) return
-
         fabric.FabricImage.fromURL(image).then((img) => {
-            img.set({ top: 50, left: 50 })
-            if (img.width > 400) img.scaleToWidth(400)
+            img.scaleToWidth(300)
             canvas.add(img)
+            canvas.centerObject(img)
             canvas.setActiveObject(img)
-            canvas.requestRenderAll()
             setImage(null)
-        }).catch(err => console.error(err))
+        })
     }, [image])
 
+    // --- Handlers ---
+    const handleCanvasBgChange = (e) => {
+        setCanvasBg(e.target.value);
+    };
+
     const activateSelectMode = () => {
-        const canvas = fabricCanvasRef.current
-        if (!canvas) return
-        canvas.isDrawingMode = false
+        if (!fabricCanvasRef.current) return
+        fabricCanvasRef.current.isDrawingMode = false
         setActiveTool('select')
+        setIsPropertiesOpen(false)
     }
 
     const activateDrawingMode = () => {
-        const canvas = fabricCanvasRef.current
-        if (!canvas) return
-        canvas.isDrawingMode = true
-        canvas.freeDrawingBrush = new fabric.PencilBrush(canvas)
-        canvas.freeDrawingBrush.color = brushSettings.stroke
-        canvas.freeDrawingBrush.width = brushSettings.strokeWidth
-        canvas.discardActiveObject()
-        canvas.requestRenderAll()
+        if (!fabricCanvasRef.current) return
+        fabricCanvasRef.current.isDrawingMode = true
+        fabricCanvasRef.current.freeDrawingBrush = new fabric.PencilBrush(fabricCanvasRef.current)
+        fabricCanvasRef.current.freeDrawingBrush.color = brushSettings.stroke
+        fabricCanvasRef.current.freeDrawingBrush.width = brushSettings.strokeWidth
+        fabricCanvasRef.current.discardActiveObject()
+        fabricCanvasRef.current.requestRenderAll()
         setActiveTool('draw')
         setSelectedObject(null)
+        setIsPropertiesOpen(true) 
     }
 
-    const handleAddText = () => {
-        const canvas = fabricCanvasRef.current
-        if (!canvas) return
-        const text = new fabric.IText('Double click to edit', {
-            left: 100, top: 100,
-            fontFamily: 'Arial',
-            fill: '#ffffff',
-            fontSize: 24
-        })
-        canvas.add(text)
-        canvas.setActiveObject(text)
+    const handleShapeAdd = (type) => {
         activateSelectMode()
-    }
-
-    const handleShapeSelect = (shapeType) => {
-        activateSelectMode()
-        const canvas = fabricCanvasRef.current
-        if (shapeType === "rect") addRectangle(canvas)
-        if (shapeType === "circle") addCircle(canvas)
-        if (shapeType === "triangle") addTriangle(canvas)
+        const c = fabricCanvasRef.current
+        if (type === "rect") addRectangle(c)
+        if (type === "circle") addCircle(c)
+        if (type === "triangle") addTriangle(c)
         setShowShapesMenu(false)
-    }
-
-    const handleImageChange = (event) => {
-        const file = event.target.files[0]
-        if (!file) return
-        const objectUrl = URL.createObjectURL(file)
-        setImage(objectUrl)
-        event.target.value = ''
-    }
-
-    const handleDelete = () => {
-        const canvas = fabricCanvasRef.current
-        if (!canvas) return
-        const activeObjects = canvas.getActiveObjects()
-        if (activeObjects.length > 0) {
-            activeObjects.forEach((obj) => canvas.remove(obj))
-            canvas.discardActiveObject()
-            canvas.requestRenderAll()
-            setSelectedObject(null)
-        }
     }
 
     const handleGenericUpdate = (key, value) => {
@@ -263,281 +202,208 @@ const EditorLayout = () => {
         setSelectedObject({ ...activeObj })
     }
 
-    const handleShadowUpdate = (key, value) => {
-        const canvas = fabricCanvasRef.current
-        const activeObj = canvas?.getActiveObject()
-        if (!activeObj) return
-
-        const newSettings = { ...shadowSettings, [key]: value }
-        setShadowSettings(newSettings)
-
-        if (newSettings.enabled) {
-            activeObj.set('shadow', new fabric.Shadow({
-                color: newSettings.color,
-                blur: newSettings.blur,
-                offsetX: newSettings.offsetX,
-                offsetY: newSettings.offsetY
-            }))
-        } else {
-            activeObj.set('shadow', null)
-        }
-        canvas.requestRenderAll()
-    }
-
-    const handleTextUpdate = (prop, value) => {
-        const canvas = fabricCanvasRef.current
-        const activeObj = canvas?.getActiveObject()
-        if (!activeObj || activeObj.type !== 'i-text') return
-
-        if (prop === 'bold') {
-            activeObj.set('fontWeight', activeObj.fontWeight === 'bold' ? 'normal' : 'bold')
-        } else if (prop === 'italic') {
-            activeObj.set('fontStyle', activeObj.fontStyle === 'italic' ? 'normal' : 'italic')
-        } else if (prop === 'underline') {
-            activeObj.set('underline', !activeObj.underline)
-        } else {
-            activeObj.set(prop, value)
-        }
-        canvas.requestRenderAll()
-        setSelectedObject({ ...activeObj })
-    }
-
-    const handleFilterApply = (filterType) => {
-        const canvas = fabricCanvasRef.current
-        const activeObj = canvas?.getActiveObject()
-        if (!activeObj || !activeObj.isType('image')) return
-        let filter = null;
-        switch(filterType) {
-            case 'Grayscale': filter = new fabric.filters.Grayscale(); break;
-            case 'Sepia': filter = new fabric.filters.Sepia(); break;
-            case 'Invert': filter = new fabric.filters.Invert(); break;
-            case 'Blur': filter = new fabric.filters.Blur({ blur: 0.5 }); break;
-            case 'Noise': filter = new fabric.filters.Noise({ noise: 100 }); break;
-            case 'Pixelate': filter = new fabric.filters.Pixelate({ blocksize: 8 }); break;
-            default: break;
-        }
-
-        if (filter) {
-            activeObj.filters.push(filter)
-            activeObj.applyFilters()
-            canvas.requestRenderAll()
-        }
-    }
-    const ColorFill = ()=>{
-        const canvas = fabricCanvasRef.current
-        const activeObj = canvas.getActiveObject()
-        const colorBucket = fabric.Color('#ffffff')
-        
-    }
-    
-    const handleLayerAction = (action, index) => {
-         const canvas = fabricCanvasRef.current;
-         if (!canvas) return;
-         
-         const objects = canvas.getObjects();
-         const actualIndex = objects.length - 1 - index;
-         const obj = objects[actualIndex];
-         
-         if (!obj) return;
-         
-         if (action === 'up') obj.bringForward();
-         if (action === 'down') obj.sendBackwards();
-         if (action === 'delete') canvas.remove(obj);
-         
-         canvas.requestRenderAll();
-    }
-
-
-    useEffect(() => {
-        const handleKeyDown = (e) => {
-            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return
-            if (e.key === 'Delete' || e.key === 'Backspace') handleDelete()
-        }
-        window.addEventListener('keydown', handleKeyDown)
-        return () => window.removeEventListener('keydown', handleKeyDown)
-    }, [])
+    // Helper to render the content of the Properties Panel
+    const renderPropertiesContent = () => (
+        <div className="space-y-4">
+            {activeTool === 'filters' ? (
+                <div className="grid grid-cols-4 gap-2">
+                    {['Grayscale', 'Sepia', 'Invert', 'Blur', 'Noise', 'Pixelate'].map(f => (
+                        <button key={f} className="bg-gray-700 hover:bg-cyan-600 rounded p-2 text-[10px] flex flex-col items-center gap-1">
+                            <IoMdColorFilter size={16} /> {f}
+                        </button>
+                    ))}
+                </div>
+            ) : activeTool === 'draw' ? (
+                <PropertyGroup title="Brush Settings">
+                    <ColorPicker label="Color" color={brushSettings.stroke} onChange={(e) => handleGenericUpdate('stroke', e.target.value)} />
+                    <RangeSlider label="Size" value={brushSettings.strokeWidth} min={1} max={50} onChange={(e) => handleGenericUpdate('strokeWidth', parseInt(e.target.value))} />
+                </PropertyGroup>
+            ) : selectedObject ? (
+                <>
+                    <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
+                         <div className="flex-1 min-w-[120px]">
+                            <PropertyGroup title="Fill & Stroke">
+                                <ColorPicker label="Fill" color={selectedObject.fill} onChange={(e) => handleGenericUpdate('fill', e.target.value)} />
+                                <ColorPicker label="Stroke" color={selectedObject.stroke || '#000000'} onChange={(e) => handleGenericUpdate('stroke', e.target.value)} />
+                            </PropertyGroup>
+                         </div>
+                         <div className="flex-1 min-w-[120px]">
+                             <PropertyGroup title="Transform">
+                                <RangeSlider label="Opacity" value={selectedObject.opacity * 100} onChange={(e) => handleGenericUpdate('opacity', parseInt(e.target.value) / 100)} />
+                                <RangeSlider label="Rotate" value={selectedObject.angle} min={0} max={360} onChange={(e) => handleGenericUpdate('angle', parseInt(e.target.value))} />
+                             </PropertyGroup>
+                         </div>
+                    </div>
+                    
+                    {selectedObject.type === 'i-text' && (
+                        <PropertyGroup title="Text Style">
+                             <div className="flex justify-around bg-gray-900 p-2 rounded">
+                                <IconButton icon={FaBold} isActive={selectedObject.fontWeight === 'bold'} onClick={() => {}} />
+                                <IconButton icon={FaItalic} isActive={selectedObject.fontStyle === 'italic'} onClick={() => {}} />
+                                <IconButton icon={FaUnderline} isActive={selectedObject.underline} onClick={() => {}} />
+                             </div>
+                        </PropertyGroup>
+                    )}
+                </>
+            ) : (
+                <PropertyGroup title="Canvas Background">
+                    <ColorPicker label="Color" color={canvasBg} onChange={handleCanvasBgChange} />
+                </PropertyGroup>
+            )}
+        </div>
+    );
 
     return (
-        <div className="min-h-screen flex bg-gray-900 text-white overflow-hidden font-sans">
+        // 1. Root Container: Vertical Flex (Header Top, Body Bottom)
+        <div className="fixed inset-0 h-[100dvh] w-full flex flex-col bg-gray-950 text-white font-sans overflow-hidden overscroll-none">
+            
+            {/* 2. Header: Always Fixed at Top */}
+            <header className="h-14 bg-gray-900/95 backdrop-blur border-b border-gray-800 flex items-center justify-between px-4 z-50 shrink-0">
+                <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 bg-gradient-to-br from-cyan-400 to-blue-600 rounded flex items-center justify-center">
+                         <FaShapes className="text-white text-sm" />
+                    </div>
+                    <span className="font-bold text-lg tracking-tight">Lumina</span>
+                </div>
+                <button 
+                    onClick={() => {
+                        const link = document.createElement('a');
+                        link.download = 'art.jpg';
+                        link.href = fabricCanvasRef.current?.toDataURL({ format: 'jpeg', quality: 0.8 });
+                        link.click();
+                    }}
+                    className="bg-cyan-500 hover:bg-cyan-400 text-black px-4 py-1.5 rounded-full text-xs font-bold flex items-center gap-2 transition-transform active:scale-95"
+                >
+                    <FaDownload /> Export
+                </button>
+            </header>
 
-            <div className="w-20 bg-gray-800 border-r border-gray-700 flex flex-col items-center py-4 z-20 shadow-xl">
-                <div className="mb-6">
-                    <div className="w-10 h-10 bg-cyan-500 rounded-lg flex items-center justify-center shadow-lg shadow-cyan-500/30">
-                        <FaShapes className="text-xl text-white" />
+            {/* 3. Main Workspace: Flex Row for Desktop, Relative for Mobile */}
+            <div className="flex-1 flex flex-row overflow-hidden relative">
+
+                {/* 4. Toolbar: Left on Desktop, Fixed Bottom on Mobile */}
+                <div className={`
+                    bg-gray-900 border-r border-gray-800 z-40
+                    /* Desktop Styles: Relative, Width 20 */
+                    hidden md:flex md:flex-col md:w-20 md:relative md:h-full md:py-4
+                `}>
+                     {/* Desktop Toolbar Content */}
+                    <div className="flex flex-col gap-4 items-center w-full">
+                        <ToolButton icon={FaMousePointer} label="Select" isActive={activeTool === 'select'} onClick={activateSelectMode} />
+                        <ToolButton icon={FaPencilAlt} label="Draw" isActive={activeTool === 'draw'} onClick={activateDrawingMode} />
+                        
+                        <div className="relative">
+                            <ToolButton icon={FaShapes} label="Shapes" isActive={showShapesMenu} onClick={() => setShowShapesMenu(!showShapesMenu)} />
+                            {showShapesMenu && (
+                                <div className="absolute left-14 top-0 bg-gray-800 border border-gray-700 rounded-lg p-2 shadow-xl flex flex-col gap-2 w-32 z-50 animate-in fade-in zoom-in duration-200">
+                                    <button onClick={() => handleShapeAdd('rect')} className="text-sm hover:text-cyan-400 text-left p-2 rounded hover:bg-gray-700">Rectangle</button>
+                                    <button onClick={() => handleShapeAdd('circle')} className="text-sm hover:text-cyan-400 text-left p-2 rounded hover:bg-gray-700">Circle</button>
+                                    <button onClick={() => handleShapeAdd('triangle')} className="text-sm hover:text-cyan-400 text-left p-2 rounded hover:bg-gray-700">Triangle</button>
+                                </div>
+                            )}
+                        </div>
+
+                        <ToolButton icon={FaFont} label="Text" onClick={() => {
+                            const t = new fabric.IText('Text', { left: 100, top: 100, fill: '#000', fontSize: 40 });
+                            fabricCanvasRef.current.add(t);
+                            fabricCanvasRef.current.setActiveObject(t);
+                            activateSelectMode();
+                        }} />
+                        
+                        <input type="file" ref={fileref} className="hidden" onChange={(e) => {
+                            const file = e.target.files[0];
+                            if(file) setImage(URL.createObjectURL(file));
+                        }} />
+                        <ToolButton icon={FaImage} label="Image" onClick={() => fileref.current.click()} />
+                        
+                        <div className="w-10 h-px bg-gray-700 my-1"></div>
+
+                        <ToolButton icon={IoMdColorFilter} label="Filters" isActive={activeTool === 'filters'} onClick={() => setActiveTool('filters')} />
                     </div>
                 </div>
-                
-                <div className="flex-1 w-full px-2 space-y-2 overflow-y-auto scrollbar-hide">
-                    <ToolButton icon={FaMousePointer} label="Select" isActive={activeTool === 'select'} onClick={activateSelectMode} />
-                    <ToolButton icon={FaPencilAlt} label="Draw" isActive={activeTool === 'draw'} onClick={activateDrawingMode} />
-                    
-                    <div className="relative w-full">
+
+                {/* 5. Mobile Toolbar (Duplicate for Mobile Layout to ensure separation of concerns) */}
+                <div className={`
+                    md:hidden fixed bottom-0 left-0 w-full h-16 bg-gray-900 border-t border-gray-800 z-50
+                    flex items-center justify-between px-4 overflow-x-auto no-scrollbar
+                `}>
+                     <ToolButton icon={FaMousePointer} label="Select" isActive={activeTool === 'select'} onClick={activateSelectMode} />
+                     <ToolButton icon={FaPencilAlt} label="Draw" isActive={activeTool === 'draw'} onClick={activateDrawingMode} />
+                     <div className="relative">
                         <ToolButton icon={FaShapes} label="Shapes" isActive={showShapesMenu} onClick={() => setShowShapesMenu(!showShapesMenu)} />
                         {showShapesMenu && (
-                            <div className="absolute left-16 top-0 bg-gray-800 border border-gray-600 rounded-lg p-2 shadow-xl flex flex-col gap-2 w-32 z-50">
-                                <button onClick={() => handleShapeSelect('rect')} className="text-sm hover:text-cyan-400 text-left p-1">Rectangle</button>
-                                <button onClick={() => handleShapeSelect('circle')} className="text-sm hover:text-cyan-400 text-left p-1">Circle</button>
-                                <button onClick={() => handleShapeSelect('triangle')} className="text-sm hover:text-cyan-400 text-left p-1">Triangle</button>
+                             <div className="absolute bottom-16 left-[-10px] bg-gray-800 border border-gray-700 rounded-lg p-2 shadow-xl flex flex-col gap-2 w-32 z-50 mb-2">
+                                <button onClick={() => handleShapeAdd('rect')} className="text-sm hover:text-cyan-400 text-left p-2 rounded hover:bg-gray-700">Rectangle</button>
+                                <button onClick={() => handleShapeAdd('circle')} className="text-sm hover:text-cyan-400 text-left p-2 rounded hover:bg-gray-700">Circle</button>
+                                <button onClick={() => handleShapeAdd('triangle')} className="text-sm hover:text-cyan-400 text-left p-2 rounded hover:bg-gray-700">Triangle</button>
                             </div>
                         )}
-                    </div>
-
-                    <ToolButton icon={FaFont} label="Text" isActive={activeTool === 'text'} onClick={handleAddText} />
-                    
-                    <input type="file" className='hidden' ref={fileref} onChange={handleImageChange} accept="image/*" />
-                    <ToolButton icon={FaImage} label="Image" isActive={activeTool === 'image'} onClick={() => fileref.current.click()} />
-                    
-                    <div className="w-full h-px bg-gray-700 my-2"></div>
-                    <ToolButton icon={IoMdColorFilter} label="Filters" isActive={activePanel === 'filters'} onClick={() => setActivePanel('filters')} />
-                    <ToolButton icon={FaLayerGroup} label="Layers" isActive={activePanel === 'layers'} onClick={() => setActivePanel('layers')} />
+                     </div>
+                     <ToolButton icon={FaFont} label="Text" onClick={() => {
+                         const t = new fabric.IText('Text', { left: 100, top: 100, fill: '#000', fontSize: 40 });
+                         fabricCanvasRef.current.add(t);
+                         fabricCanvasRef.current.setActiveObject(t);
+                         activateSelectMode();
+                     }} />
+                     <ToolButton icon={IoMdColorFilter} label="Filters" isActive={activeTool === 'filters'} onClick={() => {
+                        setActiveTool('filters');
+                        setIsPropertiesOpen(true);
+                    }} />
+                    <button 
+                        onClick={() => setIsPropertiesOpen(!isPropertiesOpen)} 
+                        className={`flex flex-col items-center justify-center w-12 h-10 rounded-lg transition-colors ${isPropertiesOpen ? 'text-cyan-400' : 'text-gray-400'}`}
+                    >
+                        <FaLayerGroup size={18} />
+                        <span className="text-[9px] mt-0.5">Props</span>
+                    </button>
                 </div>
-                <div className="mt-4 px-2 w-full space-y-2">
-                     <ToolButton icon={FaTrash} label="Delete" onClick={handleDelete} />
-                </div>
-            </div>
 
-
-            <div className="flex-1 flex flex-col relative">
-                <header className="h-14 bg-gray-800 border-b border-gray-700 flex items-center justify-between px-6 shadow-md z-10">
-                    <div className="flex items-center space-x-4">
-                        <h2 className="text-lg font-bold tracking-tight">
-                            <span className="text-cyan-400">Lumina</span> Studio
-                        </h2>
+                {/* 6. Main Canvas Area */}
+                <main className="flex-1 relative bg-[#0f172a] overflow-hidden flex items-center justify-center z-10" ref={containerRef}>
+                    <div className="absolute inset-0 opacity-10 pointer-events-none" 
+                        style={{ 
+                            backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', 
+                            backgroundSize: '24px 24px' 
+                        }}>
                     </div>
-                    <div className="flex items-center space-x-4">
-                         <button className="flex items-center space-x-2 py-1.5 px-4 rounded-lg text-sm font-bold text-gray-900 bg-cyan-400 hover:bg-cyan-300 transition shadow-lg shadow-cyan-500/20">
-                            <FaDownload /> <span>Export</span>
-                        </button>
-                    </div>
-                </header>
-
-                <main className="flex-1 bg-gray-900 overflow-hidden relative flex items-center justify-center p-8">
-                    <div className="absolute inset-0 opacity-5 pointer-events-none" 
-                         style={{ backgroundImage: 'radial-gradient(#4b5563 1px, transparent 1px)', backgroundSize: '20px 20px' }}>
-                    </div>
-                    <div className="relative shadow-2xl shadow-black/50 border border-gray-700 bg-[#1e293b] flex items-center justify-center">
+                    {/* The Canvas */}
+                    <div className="relative shadow-2xl">
                         <canvas ref={canvasRef} />
                     </div>
                 </main>
-            </div>
 
-            <div className="w-80 bg-gray-800 border-l border-gray-700 flex flex-col z-20 shadow-xl">
-                <div className="flex border-b border-gray-700">
-                    <button onClick={() => setActivePanel('properties')} className={`flex-1 py-3 text-xs font-bold uppercase tracking-wide transition-colors ${activePanel === 'properties' ? 'text-cyan-400 border-b-2 border-cyan-400 bg-gray-700/50' : 'text-gray-400 hover:text-gray-200'}`}>Properties</button>
-                    <button onClick={() => setActivePanel('layers')} className={`flex-1 py-3 text-xs font-bold uppercase tracking-wide transition-colors ${activePanel === 'layers' ? 'text-cyan-400 border-b-2 border-cyan-400 bg-gray-700/50' : 'text-gray-400 hover:text-gray-200'}`}>Layers</button>
+                {/* 7. Desktop Properties Sidebar: Right */}
+                <div className="hidden md:flex w-80 bg-gray-900 border-l border-gray-800 flex-col z-20">
+                    <div className="p-4 border-b border-gray-800 font-bold text-gray-400 uppercase text-xs tracking-wider">
+                        Properties
+                    </div>
+                    <div className="p-4 overflow-y-auto flex-1 custom-scrollbar">
+                        {renderPropertiesContent()}
+                    </div>
                 </div>
 
-                <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
-                    {activePanel === 'properties' && (
-                        <>
-                            {activeTool === 'draw' ? (
-                                <PropertyGroup title="Brush Settings">
-                                    <ColorPicker label="Color" color={brushSettings.stroke} onChange={(e) => handleGenericUpdate('stroke', e.target.value)} />
-                                    <RangeSlider label="Width" value={brushSettings.strokeWidth} min={1} max={50} onChange={(e) => handleGenericUpdate('strokeWidth', parseInt(e.target.value))} />
-                                </PropertyGroup>
-                            ) : selectedObject ? (
-                                <>
-                                    <PropertyGroup title="Transform">
-                                        <div className="grid grid-cols-2 gap-2">
-                                            <InputField label="X" value={Math.round(selectedObject.left)} onChange={(e) => handleGenericUpdate('left', parseInt(e.target.value))} />
-                                            <InputField label="Y" value={Math.round(selectedObject.top)} onChange={(e) => handleGenericUpdate('top', parseInt(e.target.value))} />
-                                            <InputField label="W" value={Math.round(selectedObject.width * selectedObject.scaleX)} onChange={(e) => handleGenericUpdate('width', parseInt(e.target.value))} />
-                                            <InputField label="H" value={Math.round(selectedObject.height * selectedObject.scaleY)} onChange={(e) => handleGenericUpdate('height', parseInt(e.target.value))} />
-                                        </div>
-                                    </PropertyGroup>
+            </div>
 
-                                    {selectedObject.type === 'i-text' && (
-                                        <PropertyGroup title="Typography">
-                                            <div className="flex space-x-2 mb-2">
-                                                <IconButton icon={FaBold} title="Bold" isActive={selectedObject.fontWeight === 'bold'} onClick={() => handleTextUpdate('bold')} />
-                                                <IconButton icon={FaItalic} title="Italic" isActive={selectedObject.fontStyle === 'italic'} onClick={() => handleTextUpdate('italic')} />
-                                                <IconButton icon={FaUnderline} title="Underline" isActive={selectedObject.underline} onClick={() => handleTextUpdate('underline')} />
-                                            </div>
-                                            <select 
-                                                className="w-full bg-gray-900 border border-gray-600 rounded px-2 py-1 text-xs text-white mb-2"
-                                                value={selectedObject.fontFamily}
-                                                onChange={(e) => handleTextUpdate('fontFamily', e.target.value)}
-                                            >
-                                                <option value="Arial">Arial</option>
-                                                <option value="Times New Roman">Times New Roman</option>
-                                                <option value="Courier New">Courier New</option>
-                                            </select>
-                                        </PropertyGroup>
-                                    )}
-
-                                    <PropertyGroup title="Appearance">
-                                        <RangeSlider label="Opacity" value={selectedObject.opacity * 100} onChange={(e) => handleGenericUpdate('opacity', parseInt(e.target.value) / 100)} />
-                                    </PropertyGroup>
-
-                                    <PropertyGroup title="Fill & Stroke">
-                                        <ColorPicker label="Fill" color={selectedObject.fill} onChange={(e) => handleGenericUpdate('fill', e.target.value)} />
-                                        <ColorPicker label="Stroke" color={selectedObject.stroke || '#000000'} onChange={(e) => handleGenericUpdate('stroke', e.target.value)} />
-                                        <RangeSlider label="Stroke Width" value={selectedObject.strokeWidth || 0} min={0} max={20} onChange={(e) => handleGenericUpdate('strokeWidth', parseInt(e.target.value))} />
-                                    </PropertyGroup>
-
-                                    <PropertyGroup title="Shadows">
-                                        <div className="flex items-center justify-between mb-2">
-                                            <span className="text-xs text-gray-300">Enable Shadow</span>
-                                            <input 
-                                                type="checkbox" 
-                                                checked={shadowSettings.enabled} 
-                                                onChange={(e) => handleShadowUpdate('enabled', e.target.checked)}
-                                                className="toggle-checkbox accent-cyan-500" 
-                                            />
-                                        </div>
-                                        {shadowSettings.enabled && (
-                                            <>
-                                                <ColorPicker label="Color" color={shadowSettings.color} onChange={(e) => handleShadowUpdate('color', e.target.value)} />
-                                                <RangeSlider label="Blur" value={shadowSettings.blur} min={0} max={50} onChange={(e) => handleShadowUpdate('blur', parseInt(e.target.value))} />
-                                                <RangeSlider label="Offset X" value={shadowSettings.offsetX} min={-50} max={50} onChange={(e) => handleShadowUpdate('offsetX', parseInt(e.target.value))} />
-                                                <RangeSlider label="Offset Y" value={shadowSettings.offsetY} min={-50} max={50} onChange={(e) => handleShadowUpdate('offsetY', parseInt(e.target.value))} />
-                                            </>
-                                        )}
-                                    </PropertyGroup>
-                                </>
-                            ) : (
-                                <div className="text-gray-500 text-sm text-center mt-10">Select an object or choose a tool</div>
-                            )}
-                        </>
-                    )}
-
-                    {activePanel === 'filters' && (
-                        <PropertyGroup title="Image Filters">
-                             <div className="grid grid-cols-3 gap-2">
-                                {['Grayscale', 'Sepia', 'Invert', 'Blur', 'Noise', 'Pixelate'].map(f => (
-                                    <button key={f} onClick={() => handleFilterApply(f)} className="bg-gray-700 hover:bg-cyan-900/30 hover:text-cyan-400 border border-gray-600 rounded-lg p-2 flex flex-col items-center gap-1 transition-all">
-                                        <IoMdColorFilter className="text-lg" />
-                                        <span className="text-[10px]">{f}</span>
-                                    </button>
-                                ))}
-                            </div>
-                            <p className="text-[10px] text-gray-500 mt-2 text-center">Select an image to apply filters</p>
-                        </PropertyGroup>
-                    )}
-
-                    {activePanel === 'layers' && (
-                        <div className="space-y-1">
-                            {layers.length === 0 && <div className="text-gray-500 text-xs text-center">No layers</div>}
-                            {layers.map((obj, i) => (
-                                <div key={i} className={`flex items-center p-2 rounded-lg ${obj === selectedObject ? 'bg-cyan-900/20 border border-cyan-500/30' : 'hover:bg-gray-700 border border-transparent'}`}>
-                                    <div className="mr-2 text-gray-500"><RiDragDropLine /></div>
-                                    <div className="w-8 h-8 bg-gray-900 border border-gray-600 rounded mr-3 flex items-center justify-center">
-                                        {obj.type === 'i-text' ? <FaFont className="text-xs"/> : <FaShapes className="text-xs" />}
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <div className="text-xs text-white font-medium truncate">{obj.type}</div>
-                                    </div>
-                                    <div className="flex items-center space-x-1">
-                                        <button onClick={() => handleLayerAction('up', i)} className="p-1.5 text-gray-400 hover:text-white"><FaArrowUp size={10} /></button>
-                                        <button onClick={() => handleLayerAction('down', i)} className="p-1.5 text-gray-400 hover:text-white"><FaArrowDown size={10} /></button>
-                                        <button onClick={() => handleLayerAction('delete', i)} className="p-1.5 text-red-400 hover:text-red-300"><FaTrash size={10} /></button>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
+            {/* 8. Mobile Properties Drawer: Fixed Overlay */}
+            <div className={`
+                md:hidden fixed left-0 right-0 z-40
+                bg-gray-800 rounded-t-2xl border-t border-gray-700 shadow-[0_-4px_30px_rgba(0,0,0,0.5)]
+                transition-transform duration-300 ease-out will-change-transform
+                ${isPropertiesOpen ? 'translate-y-0 bottom-[64px]' : 'translate-y-[110%] bottom-0'}
+            `} style={{ maxHeight: '45vh' }}>
+                <div className="flex items-center justify-between px-4 py-3 border-b border-gray-700 bg-gray-800 rounded-t-2xl sticky top-0 z-10" onClick={() => setIsPropertiesOpen(!isPropertiesOpen)}>
+                    <span className="text-xs font-bold text-cyan-400 uppercase tracking-wider">
+                        {selectedObject ? 'Edit Object' : activeTool === 'draw' ? 'Brush Settings' : 'Canvas Settings'}
+                    </span>
+                    <button onClick={() => setIsPropertiesOpen(false)} className="p-1 text-gray-400">
+                        <FaChevronDown />
+                    </button>
+                </div>
+                <div className="p-4 overflow-y-auto max-h-[35vh] custom-scrollbar pb-6">
+                    {renderPropertiesContent()}
                 </div>
             </div>
+
         </div>
     );
 };
