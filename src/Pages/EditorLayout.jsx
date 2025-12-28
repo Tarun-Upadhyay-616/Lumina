@@ -59,7 +59,7 @@ const EditorLayout = () => {
             if (containerWidth === 0 || containerHeight === 0) return;
 
             const paddingX = window.innerWidth < 768 ? 20 : 60;
-            const paddingY = window.innerWidth < 768 ? 80 : 60; // Extra bottom padding on mobile for toolbar
+            const paddingY = window.innerWidth < 768 ? 80 : 60; 
 
             const availableWidth = containerWidth - paddingX;
             const availableHeight = containerHeight - paddingY;
@@ -68,7 +68,7 @@ const EditorLayout = () => {
             const scaleY = availableHeight / 600;
             const scale = Math.min(scaleX, scaleY, 0.95); 
 
-            // Apply CSS Transform
+          
             const canvasContainer = canvas.getElement().parentNode;
             if (canvasContainer) {
                 canvasContainer.style.transform = `scale(${scale})`;
@@ -83,7 +83,6 @@ const EditorLayout = () => {
         const resizeObserver = new ResizeObserver(() => resizeCanvas());
         resizeObserver.observe(containerRef.current);
 
-        // 3. Selection Handlers
         const updateSelection = () => {
             if (canvas.isDrawingMode) return
             const active = canvas.getActiveObject()
@@ -110,7 +109,7 @@ const EditorLayout = () => {
         canvas.on('selection:cleared', updateSelection)
         canvas.on('object:modified', () => updateSelection())
 
-        // 4. Force Render on Mount (Fixes white area issue)
+
         resizeCanvas();
         setTimeout(() => {
             resizeCanvas();
@@ -124,7 +123,7 @@ const EditorLayout = () => {
         }
     }, []) 
 
-    // Update background color if state changes
+   
     useEffect(() => {
         if (fabricCanvasRef.current) {
             fabricCanvasRef.current.backgroundColor = canvasBg;
@@ -143,8 +142,6 @@ const EditorLayout = () => {
             setImage(null)
         })
     }, [image])
-
-    // --- Handlers ---
     const handleCanvasBgChange = (e) => {
         setCanvasBg(e.target.value);
     };
@@ -201,7 +198,7 @@ const EditorLayout = () => {
         setSelectedObject({ ...activeObj })
     }
 
-    // Helper to render the content of the Properties Panel
+
     const renderPropertiesContent = () => (
         <div className="space-y-4">
             {activeTool === 'filters' ? (
