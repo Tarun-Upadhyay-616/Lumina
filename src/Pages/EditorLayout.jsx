@@ -15,13 +15,13 @@ const EditorLayout = () => {
     const containerRef = useRef(null)
     const fileref = useRef(null)
     
-    // UI States
+ 
     const [activeTool, setActiveTool] = useState('select')
     const [selectedObject, setSelectedObject] = useState(null)
     const [showShapesMenu, setShowShapesMenu] = useState(false)
     const [isPropertiesOpen, setIsPropertiesOpen] = useState(false)
 
-    // Canvas States
+
     const [canvasBg, setCanvasBg] = useState('#ffffff');
     const [brushSettings, setBrushSettings] = useState({
         stroke: '#000000',
@@ -36,11 +36,11 @@ const EditorLayout = () => {
     });
     const [image, setImage] = useState(null)
 
-    // --- Canvas Logic ---
+
     useEffect(() => {
         if (!canvasRef.current || !containerRef.current) return
 
-        // 1. Initialize Canvas
+
         const canvas = new fabric.Canvas(canvasRef.current, {
             width: 800,
             height: 600, 
@@ -50,7 +50,7 @@ const EditorLayout = () => {
         })
         fabricCanvasRef.current = canvas
 
-        // 2. Smart Resizing Logic
+
         const resizeCanvas = () => {
             if (!containerRef.current || !canvas) return;
             const containerWidth = containerRef.current.clientWidth;
@@ -58,7 +58,6 @@ const EditorLayout = () => {
             
             if (containerWidth === 0 || containerHeight === 0) return;
 
-            // Padding: Mobile = Small, Desktop = Larger
             const paddingX = window.innerWidth < 768 ? 20 : 60;
             const paddingY = window.innerWidth < 768 ? 80 : 60; // Extra bottom padding on mobile for toolbar
 
@@ -254,10 +253,9 @@ const EditorLayout = () => {
     );
 
     return (
-        // 1. Root Container: Vertical Flex (Header Top, Body Bottom)
+      
         <div className="fixed inset-0 h-[100dvh] w-full flex flex-col bg-gray-950 text-white font-sans overflow-hidden overscroll-none">
-            
-            {/* 2. Header: Always Fixed at Top */}
+       
             <header className="h-14 bg-gray-900/95 backdrop-blur border-b border-gray-800 flex items-center justify-between px-4 z-50 shrink-0">
                 <div className="flex items-center gap-2">
                     <div className="w-8 h-8 bg-gradient-to-br from-cyan-400 to-blue-600 rounded flex items-center justify-center">
@@ -278,16 +276,16 @@ const EditorLayout = () => {
                 </button>
             </header>
 
-            {/* 3. Main Workspace: Flex Row for Desktop, Relative for Mobile */}
+        
             <div className="flex-1 flex flex-row overflow-hidden relative">
 
-                {/* 4. Toolbar: Left on Desktop, Fixed Bottom on Mobile */}
+                
                 <div className={`
                     bg-gray-900 border-r border-gray-800 z-40
                     /* Desktop Styles: Relative, Width 20 */
                     hidden md:flex md:flex-col md:w-20 md:relative md:h-full md:py-4
                 `}>
-                     {/* Desktop Toolbar Content */}
+             
                     <div className="flex flex-col gap-4 items-center w-full">
                         <ToolButton icon={FaMousePointer} label="Select" isActive={activeTool === 'select'} onClick={activateSelectMode} />
                         <ToolButton icon={FaPencilAlt} label="Draw" isActive={activeTool === 'draw'} onClick={activateDrawingMode} />
@@ -322,7 +320,7 @@ const EditorLayout = () => {
                     </div>
                 </div>
 
-                {/* 5. Mobile Toolbar (Duplicate for Mobile Layout to ensure separation of concerns) */}
+               
                 <div className={`
                     md:hidden fixed bottom-0 left-0 w-full h-16 bg-gray-900 border-t border-gray-800 z-50
                     flex items-center justify-between px-4 overflow-x-auto no-scrollbar
@@ -358,7 +356,7 @@ const EditorLayout = () => {
                     </button>
                 </div>
 
-                {/* 6. Main Canvas Area */}
+              
                 <main className="flex-1 relative bg-[#0f172a] overflow-hidden flex items-center justify-center z-10" ref={containerRef}>
                     <div className="absolute inset-0 opacity-10 pointer-events-none" 
                         style={{ 
@@ -366,13 +364,13 @@ const EditorLayout = () => {
                             backgroundSize: '24px 24px' 
                         }}>
                     </div>
-                    {/* The Canvas */}
+         
                     <div className="relative shadow-2xl">
                         <canvas ref={canvasRef} />
                     </div>
                 </main>
 
-                {/* 7. Desktop Properties Sidebar: Right */}
+               
                 <div className="hidden md:flex w-80 bg-gray-900 border-l border-gray-800 flex-col z-20">
                     <div className="p-4 border-b border-gray-800 font-bold text-gray-400 uppercase text-xs tracking-wider">
                         Properties
@@ -384,7 +382,6 @@ const EditorLayout = () => {
 
             </div>
 
-            {/* 8. Mobile Properties Drawer: Fixed Overlay */}
             <div className={`
                 md:hidden fixed left-0 right-0 z-40
                 bg-gray-800 rounded-t-2xl border-t border-gray-700 shadow-[0_-4px_30px_rgba(0,0,0,0.5)]
