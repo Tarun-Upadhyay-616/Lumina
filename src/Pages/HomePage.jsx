@@ -109,39 +109,23 @@ const HomePage = () => {
               title="Smart Resizing"
               description="Instantly change dimensions and optimize file size without losing quality."
               icon="⚡"
+              onclick={()=>navigate('/edit/resize-image')}
               colorClass="shadow-cyan-500"
             />
             <FeatureCard
-              title="Background Removal"
+              title="AI Background Removal"
               description="Use our AI tool to seamlessly clip subjects and replace or remove backgrounds."
               icon="✂️"
               colorClass="shadow-fuchsia-500"
             />
             <FeatureCard
-              title="One-Click Filters"
-              description="Apply professional-grade filters and effects with a single touch, built for speed."
-              icon="✨"
-              colorClass="shadow-lime-500"
-            />
-            <FeatureCard
-              title="Batch Processing"
-              description="Edit and export hundreds of images simultaneously, saving you precious time."
-              icon="⏱️"
-              colorClass="shadow-red-500"
-            />
-            <FeatureCard
-              title="Layered Editing"
-              description="Full support for layers, allowing complex compositions and non-destructive adjustments."
+              title="Editor"
+              description="Editor with custom drawing feature, image editing with filters"
               icon="🧱"
               onclick={()=>navigate('/editor')}
               colorClass="shadow-blue-500"
             />
-            <FeatureCard
-              title="Advanced Color Grading"
-              description="Precise control over HSL, curves, and split toning for cinematic results."
-              icon="🌈"
-              colorClass="shadow-yellow-500"
-            />
+            
           </div>
         </div>
       </section>

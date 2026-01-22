@@ -1,4 +1,3 @@
-// src/components/ImageResizePage.jsx
 
 import React, { useEffect, useState, useMemo } from 'react';
 import { apiClient } from './../api-client'; 
@@ -6,18 +5,19 @@ import { IoIosClose } from 'react-icons/io';
 import LoadingIcons from 'react-loading-icons';
 import { HOST } from '../Constants';
 import { RESIZEROUTE } from '../RoutesConstants';
-
-
-; 
+import { Link, useNavigate } from 'react-router-dom';
 
 const Navbar = () => (
+  
   <nav className="bg-gray-800 border-b border-cyan-800/50 shadow-md shadow-cyan-900/30">
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div className="flex justify-between items-center h-16">
         <div className="shrink-0">
-          <span className="text-xl font-extrabold text-cyan-400 tracking-wider">
+          <Link to='/'>
+          <span className="text-xl font-extrabold text-cyan-400 tracking-wider" >
             LUMINA-STUDIO
           </span>
+          </Link>
         </div>
         <div className="flex space-x-4">
           <a href="/" className="text-gray-300 hover:text-cyan-400 transition duration-150">Home</a>
@@ -215,7 +215,6 @@ const ImageResizePage = () => {
             </div>
           </div>
 
-          {/* --- Settings Panel --- */}
           <div className="lg:w-1/3">
             <div className="bg-gray-800 p-8 rounded-2xl border border-gray-700 shadow-2xl shadow-cyan-900/40 space-y-6">
               <h2 className="text-xl font-semibold text-white mb-4 border-b border-gray-700/50 pb-2">

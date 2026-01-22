@@ -8,6 +8,7 @@ import {
 import { IoMdColorFilter } from "react-icons/io";
 import { addRectangle, addCircle, addTriangle } from '../Components/AddShapes';
 import { ToolButton, IconButton, PropertyGroup, RangeSlider, ColorPicker, InputField } from './../Components/EditorComponents';
+import { useNavigate } from 'react-router-dom';
 
 const EditorLayout = () => {
     const canvasRef = useRef(null)
@@ -21,7 +22,7 @@ const EditorLayout = () => {
     const [showShapesMenu, setShowShapesMenu] = useState(false)
     const [isPropertiesOpen, setIsPropertiesOpen] = useState(false)
 
-
+    const navigate = useNavigate()
     const [canvasBg, setCanvasBg] = useState('#ffffff');
     const [brushSettings, setBrushSettings] = useState({
         stroke: '#000000',
@@ -197,7 +198,28 @@ const EditorLayout = () => {
         canvas.requestRenderAll()
         setSelectedObject({ ...activeObj })
     }
+    const handleDeleteObject = ()=>{
+        const canvas = fabricCanvasRef.current
+        if(!canvas) return 
+        const activeObj = canvas.getActiveObjects()
+        if(activeObj.length > 0) {
+            activeObj.forEach((obj)=>canvas.remove(obj))
+            canvas.discardActiveObject()
+            canvas.requestRenderAll()
+            setSelectedObject(null)
+        }
 
+    }
+    useEffect(()=>{
+        const handleKeyDown = (e) => {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return
+            if (e.key === 'Delete' || e.key === 'Backspace'){
+                handleDeleteObject()
+            }
+        }
+        window.addEventListener('keydown', handleKeyDown)
+        return () => window.removeEventListener('keydown', handleKeyDown)
+    },[])
 
     const renderPropertiesContent = () => (
         <div className="space-y-4">
@@ -258,7 +280,7 @@ const EditorLayout = () => {
                     <div className="w-8 h-8 bg-gradient-to-br from-cyan-400 to-blue-600 rounded flex items-center justify-center">
                          <FaShapes className="text-white text-sm" />
                     </div>
-                    <span className="font-bold text-lg tracking-tight">Lumina</span>
+                    <span className="font-bold text-lg tracking-tight" onClick={()=>navigate('/')}>Lumina Studio</span>
                 </div>
                 <button 
                     onClick={() => {
@@ -314,6 +336,7 @@ const EditorLayout = () => {
                         <div className="w-10 h-px bg-gray-700 my-1"></div>
 
                         <ToolButton icon={IoMdColorFilter} label="Filters" isActive={activeTool === 'filters'} onClick={() => setActiveTool('filters')} />
+                        {selectedObject && <ToolButton icon={FaTrash} label="Delete" onClick={handleDeleteObject} />}
                     </div>
                 </div>
 
