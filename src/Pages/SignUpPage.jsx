@@ -52,11 +52,6 @@ const showPassword = ()=>{
     try {
       const response = await apiClient.post(SIGNUPROUTE, { username , email, password}, { withCredentials: true });
       if (response.data.user) {
-        // await apiClient.post('/sendotp', { userId: response.data.user.id }, { withCredentials: true });
-        // toast.success('Signup successful! Please verify your email.');
-        // setTimeout(() => {
-        //   navigate('/auth/verify-email');
-        // }, 2000);
         console.log(response)
       }
     } catch (err) {

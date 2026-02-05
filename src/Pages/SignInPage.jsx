@@ -4,7 +4,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { ToastContainer, toast } from 'react-toastify';
 import { apiClient } from '../api-client';
 import LoadingIcons from 'react-loading-icons'
-import { SIGNINROUTE } from '../RoutesConstants';
+import { AIROUTE, SIGNINROUTE } from '../RoutesConstants';
 import { IoMdEye, IoMdEyeOff } from "react-icons/io";
 
 const SignInPage = () => {
@@ -66,6 +66,15 @@ const SignInPage = () => {
       setIsLoading(false);
     }
   };
+  const waste = async()=>{
+    try {
+      console.log("working")
+      const response = await apiClient.get(AIROUTE)
+      console.log(response)
+    } catch (error) {
+      console.log(error)
+    }
+  }
   return (
     <>
       <ToastContainer theme='dark' position='top-right' autoClose={3000} />
@@ -111,6 +120,8 @@ const SignInPage = () => {
             >
               {isLoading ? <LoadingIcons.ThreeDots /> : "Continue"}
             </button>
+            <button className="w-full flex justify-center py-2.5 px-4  border border-transparent rounded-xl shadow-lg text-md font-bold text-gray-900 bg-cyan-400 hover:bg-cyan-300 focus:outline-none focus:ring-4 focus:ring-offset-2 focus:ring-cyan-600 focus:ring-offset-gray-800 transition duration-200"
+              onClick={waste}>Get AI response</button>
           </div>
           <div className="flex items-center">
             <div className="grow border-t border-gray-700"></div>
