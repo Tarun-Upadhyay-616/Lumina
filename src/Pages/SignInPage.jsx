@@ -120,8 +120,6 @@ const SignInPage = () => {
             >
               {isLoading ? <LoadingIcons.ThreeDots /> : "Continue"}
             </button>
-            <button className="w-full flex justify-center py-2.5 px-4  border border-transparent rounded-xl shadow-lg text-md font-bold text-gray-900 bg-cyan-400 hover:bg-cyan-300 focus:outline-none focus:ring-4 focus:ring-offset-2 focus:ring-cyan-600 focus:ring-offset-gray-800 transition duration-200"
-              onClick={waste}>Get AI response</button>
           </div>
           <div className="flex items-center">
             <div className="grow border-t border-gray-700"></div>
