@@ -1,3 +1,4 @@
+import { SignedIn, SignedOut, UserButton } from '@clerk/clerk-react';
 import React, { Children } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -16,8 +17,13 @@ const Navbar = () => (
         <div className="hidden md:flex space-x-6 items-center">
           <a href="#features" className="text-gray-300 hover:text-cyan-400 font-medium transition duration-150">Features</a>
           <a href="#testimonials" className="text-gray-300 hover:text-cyan-400 font-medium transition duration-150">Testimonials</a>
-          <a href="/resize" className="text-cyan-400 font-bold hover:text-cyan-300 transition duration-150">Start Editing &rarr;</a>
-          <a href="/signin" className="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition duration-150 border border-gray-600">Sign In</a>
+         
+          <SignedOut>
+             <a href="/signin" className="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition duration-150 border border-gray-600">Sign In</a>
+          </SignedOut>
+          <SignedIn>
+            <UserButton afterSignOutUrl="/auth/signin" />
+          </SignedIn>
         </div>
 
 
@@ -89,7 +95,7 @@ const HomePage = () => {
             Lumina-Studio provides professional, AI-powered editing tools in a simple, elegant interface.
           </p>
           <a
-            href="/resize"
+            href="/editor"
             className="px-8 py-3 bg-cyan-500 text-gray-900 font-bold rounded-xl text-lg shadow-lg shadow-cyan-500/50 hover:bg-cyan-400 transition duration-300 ease-in-out transform hover:scale-105"
           >
             Launch Editor Now

@@ -1,22 +1,23 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as fabric from 'fabric';
-import { 
-    FaMousePointer, FaPencilAlt, FaShapes, FaFont, FaImage, 
-    FaDownload, FaTrash, FaBold, FaItalic, 
+import {
+    FaMousePointer, FaPencilAlt, FaShapes, FaFont, FaImage,
+    FaDownload, FaTrash, FaBold, FaItalic,
     FaUnderline, FaArrowUp, FaArrowDown, FaChevronDown, FaLayerGroup
 } from 'react-icons/fa';
 import { IoMdColorFilter } from "react-icons/io";
 import { addRectangle, addCircle, addTriangle } from '../Components/AddShapes';
 import { ToolButton, IconButton, PropertyGroup, RangeSlider, ColorPicker, InputField } from './../Components/EditorComponents';
 import { useNavigate } from 'react-router-dom';
+import { SignedIn, SignedOut } from '@clerk/clerk-react';
 
 const EditorLayout = () => {
     const canvasRef = useRef(null)
     const fabricCanvasRef = useRef(null)
     const containerRef = useRef(null)
     const fileref = useRef(null)
-    
- 
+
+
     const [activeTool, setActiveTool] = useState('select')
     const [selectedObject, setSelectedObject] = useState(null)
     const [showShapesMenu, setShowShapesMenu] = useState(false)
@@ -44,10 +45,10 @@ const EditorLayout = () => {
 
         const canvas = new fabric.Canvas(canvasRef.current, {
             width: 800,
-            height: 600, 
-            backgroundColor: canvasBg, 
+            height: 600,
+            backgroundColor: canvasBg,
             isDrawingMode: false,
-            preserveObjectStacking: true, 
+            preserveObjectStacking: true,
         })
         fabricCanvasRef.current = canvas
 
@@ -56,28 +57,28 @@ const EditorLayout = () => {
             if (!containerRef.current || !canvas) return;
             const containerWidth = containerRef.current.clientWidth;
             const containerHeight = containerRef.current.clientHeight;
-            
+
             if (containerWidth === 0 || containerHeight === 0) return;
 
             const paddingX = window.innerWidth < 768 ? 20 : 60;
-            const paddingY = window.innerWidth < 768 ? 80 : 60; 
+            const paddingY = window.innerWidth < 768 ? 80 : 60;
 
             const availableWidth = containerWidth - paddingX;
             const availableHeight = containerHeight - paddingY;
-            
+
             const scaleX = availableWidth / 800;
             const scaleY = availableHeight / 600;
-            const scale = Math.min(scaleX, scaleY, 0.95); 
+            const scale = Math.min(scaleX, scaleY, 0.95);
 
-          
+
             const canvasContainer = canvas.getElement().parentNode;
             if (canvasContainer) {
                 canvasContainer.style.transform = `scale(${scale})`;
                 canvasContainer.style.transformOrigin = 'center center';
-                canvasContainer.style.border = '1px solid #334155'; 
+                canvasContainer.style.border = '1px solid #334155';
                 canvasContainer.style.boxShadow = '0 10px 30px rgba(0,0,0,0.5)';
             }
-            
+
             canvas.renderAll();
         };
 
@@ -87,7 +88,7 @@ const EditorLayout = () => {
         const updateSelection = () => {
             if (canvas.isDrawingMode) return
             const active = canvas.getActiveObject()
-            
+
             if (active) {
                 const s = active.shadow;
                 setShadowSettings({
@@ -98,7 +99,7 @@ const EditorLayout = () => {
                     offsetY: s ? s.offsetY : 5
                 });
                 setSelectedObject({ ...active })
-                if(window.innerWidth < 768) setIsPropertiesOpen(true); 
+                if (window.innerWidth < 768) setIsPropertiesOpen(true);
             } else {
                 setSelectedObject(null)
                 if (activeTool !== 'draw') setIsPropertiesOpen(false);
@@ -122,9 +123,9 @@ const EditorLayout = () => {
             canvas.dispose()
             fabricCanvasRef.current = null
         }
-    }, []) 
+    }, [])
 
-   
+
     useEffect(() => {
         if (fabricCanvasRef.current) {
             fabricCanvasRef.current.backgroundColor = canvasBg;
@@ -164,7 +165,7 @@ const EditorLayout = () => {
         fabricCanvasRef.current.requestRenderAll()
         setActiveTool('draw')
         setSelectedObject(null)
-        setIsPropertiesOpen(true) 
+        setIsPropertiesOpen(true)
     }
 
     const handleShapeAdd = (type) => {
@@ -193,33 +194,33 @@ const EditorLayout = () => {
         if (key === 'width') activeObj.set({ scaleX: value / activeObj.width })
         else if (key === 'height') activeObj.set({ scaleY: value / activeObj.height })
         else activeObj.set(key, value)
-        
+
         activeObj.setCoords()
         canvas.requestRenderAll()
         setSelectedObject({ ...activeObj })
     }
-    const handleDeleteObject = ()=>{
+    const handleDeleteObject = () => {
         const canvas = fabricCanvasRef.current
-        if(!canvas) return 
+        if (!canvas) return
         const activeObj = canvas.getActiveObjects()
-        if(activeObj.length > 0) {
-            activeObj.forEach((obj)=>canvas.remove(obj))
+        if (activeObj.length > 0) {
+            activeObj.forEach((obj) => canvas.remove(obj))
             canvas.discardActiveObject()
             canvas.requestRenderAll()
             setSelectedObject(null)
         }
 
     }
-    useEffect(()=>{
+    useEffect(() => {
         const handleKeyDown = (e) => {
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return
-            if (e.key === 'Delete' || e.key === 'Backspace'){
+            if (e.key === 'Delete' || e.key === 'Backspace') {
                 handleDeleteObject()
             }
         }
         window.addEventListener('keydown', handleKeyDown)
         return () => window.removeEventListener('keydown', handleKeyDown)
-    },[])
+    }, [])
 
     const renderPropertiesContent = () => (
         <div className="space-y-4">
@@ -239,27 +240,27 @@ const EditorLayout = () => {
             ) : selectedObject ? (
                 <>
                     <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
-                         <div className="flex-1 min-w-[120px]">
+                        <div className="flex-1 min-w-[120px]">
                             <PropertyGroup title="Fill & Stroke">
                                 <ColorPicker label="Fill" color={selectedObject.fill} onChange={(e) => handleGenericUpdate('fill', e.target.value)} />
                                 <ColorPicker label="Stroke" color={selectedObject.stroke || '#000000'} onChange={(e) => handleGenericUpdate('stroke', e.target.value)} />
                             </PropertyGroup>
-                         </div>
-                         <div className="flex-1 min-w-[120px]">
-                             <PropertyGroup title="Transform">
+                        </div>
+                        <div className="flex-1 min-w-[120px]">
+                            <PropertyGroup title="Transform">
                                 <RangeSlider label="Opacity" value={selectedObject.opacity * 100} onChange={(e) => handleGenericUpdate('opacity', parseInt(e.target.value) / 100)} />
                                 <RangeSlider label="Rotate" value={selectedObject.angle} min={0} max={360} onChange={(e) => handleGenericUpdate('angle', parseInt(e.target.value))} />
-                             </PropertyGroup>
-                         </div>
+                            </PropertyGroup>
+                        </div>
                     </div>
-                    
+
                     {selectedObject.type === 'i-text' && (
                         <PropertyGroup title="Text Style">
-                             <div className="flex justify-around bg-gray-900 p-2 rounded">
-                                <IconButton icon={FaBold} isActive={selectedObject.fontWeight === 'bold'} onClick={() => {}} />
-                                <IconButton icon={FaItalic} isActive={selectedObject.fontStyle === 'italic'} onClick={() => {}} />
-                                <IconButton icon={FaUnderline} isActive={selectedObject.underline} onClick={() => {}} />
-                             </div>
+                            <div className="flex justify-around bg-gray-900 p-2 rounded">
+                                <IconButton icon={FaBold} isActive={selectedObject.fontWeight === 'bold'} onClick={() => { }} />
+                                <IconButton icon={FaItalic} isActive={selectedObject.fontStyle === 'italic'} onClick={() => { }} />
+                                <IconButton icon={FaUnderline} isActive={selectedObject.underline} onClick={() => { }} />
+                            </div>
                         </PropertyGroup>
                     )}
                 </>
@@ -267,48 +268,57 @@ const EditorLayout = () => {
                 <PropertyGroup title="Canvas Background">
                     <ColorPicker label="Color" color={canvasBg} onChange={handleCanvasBgChange} />
                 </PropertyGroup>
-            )}
+            )} 
         </div>
     );
 
     return (
-      
-        <div className="fixed inset-0 h-[100dvh] w-full flex flex-col bg-gray-950 text-white font-sans overflow-hidden overscroll-none">
-       
+
+        <div className="fixed inset-0 h-[100vh] w-full flex flex-col bg-gray-950 text-white font-sans overflow-hidden overscroll-none">
+
             <header className="h-14 bg-gray-900/95 backdrop-blur border-b border-gray-800 flex items-center justify-between px-4 z-50 shrink-0">
                 <div className="flex items-center gap-2">
                     <div className="w-8 h-8 bg-gradient-to-br from-cyan-400 to-blue-600 rounded flex items-center justify-center">
-                         <FaShapes className="text-white text-sm" />
+                        <FaShapes className="text-white text-sm" />
                     </div>
-                    <span className="font-bold text-lg tracking-tight" onClick={()=>navigate('/')}>Lumina Studio</span>
+                    <span className="font-bold text-lg tracking-tight" onClick={() => navigate('/')}>Lumina Studio</span>
                 </div>
-                <button 
-                    onClick={() => {
-                        const link = document.createElement('a');
-                        link.download = 'art.jpg';
-                        link.href = fabricCanvasRef.current?.toDataURL({ format: 'jpeg', quality: 0.8 });
-                        link.click();
-                    }}
-                    className="bg-cyan-500 hover:bg-cyan-400 text-black px-4 py-1.5 rounded-full text-xs font-bold flex items-center gap-2 transition-transform active:scale-95"
-                >
-                    <FaDownload /> Export
-                </button>
+                <SignedIn>
+                    <button
+                        onClick={() => {
+                            const link = document.createElement('a');
+                            link.download = 'art.jpg';
+                            link.href = fabricCanvasRef.current?.toDataURL({ format: 'jpeg', quality: 0.8 });
+                            link.click();
+                        }}
+                        className="bg-cyan-500 hover:bg-cyan-400 text-black px-4 py-1.5 rounded-full text-xs font-bold flex items-center gap-2 transition-transform active:scale-95"
+                    >
+                        <FaDownload /> Export
+                    </button></SignedIn>
+                <SignedOut>
+                    <a
+                        href='/auth/signin'
+                        className="bg-cyan-500 hover:bg-cyan-400 text-black px-4 py-1.5 rounded-full text-xs font-bold flex items-center gap-2 transition-transform active:scale-95"
+                    >
+                        <FaDownload /> Export
+                    </a>
+                </SignedOut>
             </header>
 
-        
+
             <div className="flex-1 flex flex-row overflow-hidden relative">
 
-                
+
                 <div className={`
                     bg-gray-900 border-r border-gray-800 z-40
                     /* Desktop Styles: Relative, Width 20 */
                     hidden md:flex md:flex-col md:w-20 md:relative md:h-full md:py-4
                 `}>
-             
+
                     <div className="flex flex-col gap-4 items-center w-full">
                         <ToolButton icon={FaMousePointer} label="Select" isActive={activeTool === 'select'} onClick={activateSelectMode} />
                         <ToolButton icon={FaPencilAlt} label="Draw" isActive={activeTool === 'draw'} onClick={activateDrawingMode} />
-                        
+
                         <div className="relative">
                             <ToolButton icon={FaShapes} label="Shapes" isActive={showShapesMenu} onClick={() => setShowShapesMenu(!showShapesMenu)} />
                             {showShapesMenu && (
@@ -326,13 +336,13 @@ const EditorLayout = () => {
                             fabricCanvasRef.current.setActiveObject(t);
                             activateSelectMode();
                         }} />
-                        
+
                         <input type="file" ref={fileref} className="hidden" onChange={(e) => {
                             const file = e.target.files[0];
-                            if(file) setImage(URL.createObjectURL(file));
+                            if (file) setImage(URL.createObjectURL(file));
                         }} />
                         <ToolButton icon={FaImage} label="Image" onClick={() => fileref.current.click()} />
-                        
+
                         <div className="w-10 h-px bg-gray-700 my-1"></div>
 
                         <ToolButton icon={IoMdColorFilter} label="Filters" isActive={activeTool === 'filters'} onClick={() => setActiveTool('filters')} />
@@ -340,35 +350,35 @@ const EditorLayout = () => {
                     </div>
                 </div>
 
-               
+
                 <div className={`
                     md:hidden fixed bottom-0 left-0 w-full h-16 bg-gray-900 border-t border-gray-800 z-50
                     flex items-center justify-between px-4 overflow-x-auto no-scrollbar
                 `}>
-                     <ToolButton icon={FaMousePointer} label="Select" isActive={activeTool === 'select'} onClick={activateSelectMode} />
-                     <ToolButton icon={FaPencilAlt} label="Draw" isActive={activeTool === 'draw'} onClick={activateDrawingMode} />
-                     <div className="relative">
+                    <ToolButton icon={FaMousePointer} label="Select" isActive={activeTool === 'select'} onClick={activateSelectMode} />
+                    <ToolButton icon={FaPencilAlt} label="Draw" isActive={activeTool === 'draw'} onClick={activateDrawingMode} />
+                    <div className="relative">
                         <ToolButton icon={FaShapes} label="Shapes" isActive={showShapesMenu} onClick={() => setShowShapesMenu(!showShapesMenu)} />
                         {showShapesMenu && (
-                             <div className="absolute bottom-16 left-[-10px] bg-gray-800 border border-gray-700 rounded-lg p-2 shadow-xl flex flex-col gap-2 w-32 z-50 mb-2">
+                            <div className="absolute bottom-16 left-[-10px] bg-gray-800 border border-gray-700 rounded-lg p-2 shadow-xl flex flex-col gap-2 w-32 z-50 mb-2">
                                 <button onClick={() => handleShapeAdd('rect')} className="text-sm hover:text-cyan-400 text-left p-2 rounded hover:bg-gray-700">Rectangle</button>
                                 <button onClick={() => handleShapeAdd('circle')} className="text-sm hover:text-cyan-400 text-left p-2 rounded hover:bg-gray-700">Circle</button>
                                 <button onClick={() => handleShapeAdd('triangle')} className="text-sm hover:text-cyan-400 text-left p-2 rounded hover:bg-gray-700">Triangle</button>
                             </div>
                         )}
-                     </div>
-                     <ToolButton icon={FaFont} label="Text" onClick={() => {
-                         const t = new fabric.IText('Text', { left: 100, top: 100, fill: '#000', fontSize: 40 });
-                         fabricCanvasRef.current.add(t);
-                         fabricCanvasRef.current.setActiveObject(t);
-                         activateSelectMode();
-                     }} />
-                     <ToolButton icon={IoMdColorFilter} label="Filters" isActive={activeTool === 'filters'} onClick={() => {
+                    </div>
+                    <ToolButton icon={FaFont} label="Text" onClick={() => {
+                        const t = new fabric.IText('Text', { left: 100, top: 100, fill: '#000', fontSize: 40 });
+                        fabricCanvasRef.current.add(t);
+                        fabricCanvasRef.current.setActiveObject(t);
+                        activateSelectMode();
+                    }} />
+                    <ToolButton icon={IoMdColorFilter} label="Filters" isActive={activeTool === 'filters'} onClick={() => {
                         setActiveTool('filters');
                         setIsPropertiesOpen(true);
                     }} />
-                    <button 
-                        onClick={() => setIsPropertiesOpen(!isPropertiesOpen)} 
+                    <button
+                        onClick={() => setIsPropertiesOpen(!isPropertiesOpen)}
                         className={`flex flex-col items-center justify-center w-12 h-10 rounded-lg transition-colors ${isPropertiesOpen ? 'text-cyan-400' : 'text-gray-400'}`}
                     >
                         <FaLayerGroup size={18} />
@@ -376,21 +386,21 @@ const EditorLayout = () => {
                     </button>
                 </div>
 
-              
+
                 <main className="flex-1 relative bg-[#0f172a] overflow-hidden flex items-center justify-center z-10" ref={containerRef}>
-                    <div className="absolute inset-0 opacity-10 pointer-events-none" 
-                        style={{ 
-                            backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', 
-                            backgroundSize: '24px 24px' 
+                    <div className="absolute inset-0 opacity-10 pointer-events-none"
+                        style={{
+                            backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)',
+                            backgroundSize: '24px 24px'
                         }}>
                     </div>
-         
+
                     <div className="relative shadow-2xl">
                         <canvas ref={canvasRef} />
                     </div>
                 </main>
 
-               
+
                 <div className="hidden md:flex w-80 bg-gray-900 border-l border-gray-800 flex-col z-20">
                     <div className="p-4 border-b border-gray-800 font-bold text-gray-400 uppercase text-xs tracking-wider">
                         Properties
