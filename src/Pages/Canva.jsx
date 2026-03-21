@@ -3,6 +3,8 @@ import * as fabric from 'fabric';
 
 const Canva = () => {
     const canvasRef = useRef(null)
+    const containerRef = useRef(null)
+
     useEffect(()=>{
         const canvas = new fabric.Canvas(canvasRef.current)
 
@@ -15,12 +17,28 @@ const Canva = () => {
         })
         canvas.add(rect)
 
+        const handleResize = () => {
+          if (containerRef.current) {
+            const width = containerRef.current.clientWidth;
+            const height = containerRef.current.clientHeight;
+            canvas.setDimensions({ width, height });
+            canvas.renderAll();
+          }
+        }
+
+        window.addEventListener('resize', handleResize);
+        handleResize();
+
         return ()=>{
+            window.removeEventListener('resize', handleResize);
             canvas.dispose()
         }
     },[])
+
   return (
-    <canvas className='bg-black' ref={canvasRef} width={600} height={400}/>
+    <div ref={containerRef} className="w-full h-screen bg-black overflow-hidden">
+        <canvas ref={canvasRef} />
+    </div>
   )
 }
 
