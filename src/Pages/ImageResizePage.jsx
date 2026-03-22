@@ -1,34 +1,98 @@
-
 import React, { useEffect, useState, useMemo } from 'react';
 import { apiClient } from './../api-client'; 
 import { IoIosClose } from 'react-icons/io';
 import LoadingIcons from 'react-loading-icons';
 import { HOST } from '../Constants';
 import { RESIZEROUTE } from '../RoutesConstants';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
-const Navbar = () => (
-  
-  <nav className="bg-gray-800 border-b border-cyan-800/50 shadow-md shadow-cyan-900/30">
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div className="flex justify-between items-center h-16">
-        <div className="shrink-0">
-          <Link to='/'>
-          <span className="text-xl font-extrabold text-cyan-400 tracking-wider" >
-            LUMINA-STUDIO
-          </span>
-          </Link>
-        </div>
-        <div className="flex space-x-4">
-          <a href="/" className="text-gray-300 hover:text-cyan-400 transition duration-150">Home</a>
-          <a href="#" className="text-gray-300 hover:text-cyan-400 transition duration-150">Gallery</a>
-          <a href="#" className="text-cyan-400 font-bold transition duration-150">Tools</a>
+const Navbar = () => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [isToolsOpen, setIsToolsOpen] = useState(false);
+
+  const TOOLS_LIST = [
+    { name: 'Background Remover', path: '/bg-remover', description: 'AI cutout' },
+    { name: 'Photo Editor', path: '/editor', description: 'Editor' },
+  ];
+
+  return (
+    <nav className="bg-gray-800 border-b border-cyan-800/50 shadow-md shadow-cyan-900/30 sticky top-0 z-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-16">
+          <div className="shrink-0">
+            <Link to='/' className="flex items-center">
+              <span className="text-xl font-extrabold text-cyan-400 tracking-wider">
+                LUMINA-STUDIO
+              </span>
+            </Link>
+          </div>
+          
+          <div className="hidden md:flex space-x-8 items-center">
+            <Link to="/" className="text-sm font-medium text-gray-300 hover:text-cyan-400 transition duration-150">Home</Link>
+            
+            <div 
+              className="relative group"
+              onMouseEnter={() => setIsToolsOpen(true)}
+              onMouseLeave={() => setIsToolsOpen(false)}
+            >
+              <button className="flex items-center gap-1 text-sm text-cyan-400 font-bold transition duration-150 py-5">
+                Tools
+                <svg className={`w-4 h-4 transition-transform ${isToolsOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              {isToolsOpen && (
+                <div className="absolute right-0 mt-0 w-64 bg-gray-800 border border-gray-700 rounded-xl shadow-2xl py-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                  {TOOLS_LIST.map((tool) => (
+                    <Link
+                      key={tool.path}
+                      to={tool.path}
+                      className="block px-4 py-3 hover:bg-cyan-500/10 transition-colors border-b border-gray-700/50 last:border-0 group"
+                    >
+                      <p className="text-sm font-bold text-white group-hover:text-cyan-400">{tool.name}</p>
+                      <p className="text-[10px] text-gray-500 uppercase tracking-tighter">{tool.description}</p>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <button
+            className="md:hidden p-2 text-gray-300 hover:text-cyan-400 focus:outline-none"
+            onClick={() => setIsOpen(!isOpen)}
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={isOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16m-7 6h7"}></path>
+            </svg>
+          </button>
         </div>
       </div>
-    </div>
-  </nav>
-);
-
+      
+      {isOpen && (
+        <div className="md:hidden bg-gray-800 border-t border-gray-700 px-4 py-4 space-y-4 shadow-inner">
+          <Link to="/" className="block text-base font-medium text-gray-300" onClick={() => setIsOpen(false)}>Home</Link>
+          <div className="border-t border-gray-700 pt-4">
+            <p className="text-xs font-bold text-gray-500 uppercase mb-3">Our Tools</p>
+            <div className="grid grid-cols-1 gap-2">
+              {TOOLS_LIST.map((tool) => (
+                <Link
+                  key={tool.path}
+                  to={tool.path}
+                  className="p-3 bg-gray-900/50 rounded-lg border border-gray-700 active:bg-cyan-900/20"
+                  onClick={() => setIsOpen(false)}
+                >
+                  <p className="text-sm font-bold text-cyan-400">{tool.name}</p>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </nav>
+  );
+};
 
 const ImageResizePage = () => {
   const [image, setImage] = useState(null);
@@ -41,36 +105,22 @@ const ImageResizePage = () => {
   const [resizedPath, setResizedPath] = useState(null);
   const [resizedMetrics, setResizedMetrics] = useState({ sizeKB: null, name: null });
 
-
   const handleImageChange = async (event) => {
     const file = event.target.files[0];
-
     if (file && file.type.startsWith('image/')) {
-
       const objectUrl = URL.createObjectURL(file);
       const img = new Image();
       img.src = objectUrl;
-
       img.onload = () => {
-        const currentWidth = img.naturalWidth;
-        const currentHeight = img.naturalHeight;
-
-        setWidth(currentWidth.toString());
-        setHeight(currentHeight.toString());
-
+        setWidth(img.naturalWidth.toString());
+        setHeight(img.naturalHeight.toString());
         URL.revokeObjectURL(objectUrl);
       };
-
-      img.onerror = () => {
-        URL.revokeObjectURL(objectUrl);
-        console.error("Error loading image for dimension check.");
-      };
-
       setImage(file);
       setResizedPath(null);
       setResizedMetrics({ sizeKB: null, name: null });
     }
-  }
+  };
 
   useEffect(() => {
     if (!image) {
@@ -91,23 +141,16 @@ const ImageResizePage = () => {
 
   const isResizeDisabled = useMemo(() => {
     if (isLoading || !image) return true;
-
-    if (resizeType === 'dimension') {
-      return !(width && height);
-    } else if (resizeType === 'size') {
-      return !targetSizeKB;
-    }
+    if (resizeType === 'dimension') return !(width && height);
+    if (resizeType === 'size') return !targetSizeKB;
     return true;
   }, [isLoading, image, resizeType, width, height, targetSizeKB]);
 
-
   const ResizeImage = async () => {
     if (isResizeDisabled) return;
-
     const formData = new FormData();
     formData.append('image', image);
     formData.append('resizeType', resizeType);
-
     if (resizeType === 'dimension') {
       formData.append('width', width);
       formData.append('height', height);
@@ -117,208 +160,192 @@ const ImageResizePage = () => {
 
     setIsLoading(true);
     try {
-
       const response = await apiClient.post(RESIZEROUTE, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
-
       const responseData = response.data.data;
-
-      alert("Image resized successfully!");
-
       setResizedPath(responseData.resizedURL);
       setResizedMetrics({
         sizeKB: responseData.resizedSizeKB,
         name: responseData.resizedName
       });
-
     } catch (error) {
-      console.error(error);
       alert(`Upload failed: ${error.response?.data?.message || error.message}`);
     } finally {
       setIsLoading(false);
     }
-  }
+  };
 
   return (
-    <div className="min-h-screen bg-gray-900">
+    <div className="min-h-screen bg-gray-900 text-white flex flex-col font-sans">
       <Navbar />
-
-      <div className="max-w-5xl mx-auto py-10 px-4 sm:px-6 lg:px-8">
-        <header className="mb-8 text-center">
-          <h1 className="text-4xl font-extrabold text-white mb-2">
+      
+      <main className="flex-1 w-full max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        <header className="mb-10 text-center max-w-2xl mx-auto">
+          <h1 className="text-3xl sm:text-5xl font-extrabold mb-3 bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-blue-500">
             Image Resizer
           </h1>
-          <p className="text-lg text-gray-400">
-            Adjust dimensions and target file size with a few clicks.
+          <p className="text-sm sm:text-lg text-gray-400">
+            Professional-grade image optimization. Adjust dimensions or compress file size in seconds.
           </p>
         </header>
 
-        <div className="flex flex-col lg:flex-row lg:space-x-8">
-
-          <div className="lg:w-2/3 mb-8 lg:mb-0">
-            <div className="bg-gray-800 p-8 rounded-2xl border border-gray-700 shadow-2xl shadow-cyan-900/40 h-full">
-              <h2 className="text-xl font-semibold text-white mb-4 border-b border-gray-700/50 pb-2 flex gap-5 justify-between">
-                {!image ? "Upload Image" : image.name}
-                {image && <IoIosClose className='text-red-500 text-4xl cursor-pointer' onClick={handleClearImage} />}
-              </h2>
-
-              {!image ? (
-                <div className="flex items-center justify-center w-full">
-                  <label
-                    htmlFor="dropzone-file"
-                    className="flex flex-col items-center justify-center w-full h-64 border-2 border-dashed border-cyan-600 rounded-xl cursor-pointer bg-gray-700/50 hover:bg-gray-700 transition duration-200"
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          <div className="lg:col-span-8 w-full order-1">
+            <div className="bg-gray-800 rounded-2xl border border-gray-700 shadow-2xl overflow-hidden">
+              <div className="flex justify-between items-center p-4 sm:p-5 border-b border-gray-700/50 bg-gray-800/50">
+                <h2 className="text-sm sm:text-base font-semibold truncate max-w-[80%]">
+                  {!image ? "Step 1: Upload your image" : `Editing: ${image.name}`}
+                </h2>
+                {image && (
+                  <button 
+                    onClick={handleClearImage}
+                    className="p-1 hover:bg-red-500/20 rounded-full transition-colors group"
                   >
-                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                      <svg className="w-10 h-10 mb-3 text-cyan-400 drop-shadow-[0_0_8px_rgba(45,212,255,0.7)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 014 4v2m-5 4l-4-4m0 0l-4 4m4-4v12"></path></svg>
-                      <p className="mb-2 text-sm text-gray-300">
-                        <span className="font-semibold text-cyan-400">Click to upload</span> or drag and drop
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        PNG, JPG, or GIF (Max 10MB)
-                      </p>
-                    </div>
-                    <input id="dropzone-file" type="file" className="hidden" accept="image/*" onChange={handleImageChange} />
-                  </label>
-                </div>)
+                    <IoIosClose className='text-red-500 text-3xl group-hover:scale-110 transition-transform' />
+                  </button>
+                )}
+              </div>
 
-                : (
-                  <div className="flex flex-col items-center justify-center w-full">
-                    <div className='relative w-full h-auto max-h-[50vh] overflow-hidden rounded-xl'>
-                      <img src={previewUrl} alt="Original Image Preview" className="w-full h-auto object-contain" />
+              <div className="p-4 sm:p-6">
+                {!image ? (
+                  <label className="flex flex-col items-center justify-center w-full min-h-[300px] border-2 border-dashed border-cyan-600/50 rounded-2xl cursor-pointer bg-gray-700/20 hover:bg-gray-700/40 hover:border-cyan-400 transition-all group">
+                    <div className="flex flex-col items-center justify-center p-6 text-center">
+                      <div className="w-16 h-16 mb-4 rounded-full bg-cyan-400/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <svg className="w-8 h-8 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 014 4v2m-5 4l-4-4m0 0l-4 4m4-4v12" />
+                        </svg>
+                      </div>
+                      <p className="text-lg font-medium mb-1"><span className="text-cyan-400">Click to upload</span> or drag and drop</p>
+                      <p className="text-sm text-gray-500">PNG, JPG, or WEBP (Max 10MB)</p>
                     </div>
-                    <div className="mt-4 text-center text-gray-400 text-sm">
-                      Original Size: {image.size ? (image.size / 1024).toFixed(2) : ''} KB |
-                      Dimensions: {width}px x {height}px
+                    <input type="file" className="hidden" accept="image/*" onChange={handleImageChange} />
+                  </label>
+                ) : (
+                  <div className="space-y-6">
+                    <div className='w-full bg-gray-950 rounded-xl overflow-hidden shadow-inner flex justify-center items-center border border-gray-700'>
+                      <img 
+                        src={previewUrl} 
+                        alt="Preview" 
+                        className="max-h-[350px] sm:max-h-[500px] lg:max-h-[600px] w-auto object-contain p-2" 
+                      />
+                    </div>
+                    
+                    <div className="flex flex-wrap justify-center gap-4 text-xs sm:text-sm font-mono text-cyan-400 bg-cyan-950/30 py-3 px-4 rounded-lg border border-cyan-900/50">
+                      <span>ORIGINAL: {(image.size / 1024).toFixed(1)} KB</span>
+                      <span className="text-gray-600">|</span>
+                      <span>DIMENSIONS: {width} × {height} px</span>
                     </div>
 
                     {resizedPath && (
-                      <div className="mt-6 p-4 bg-gray-700 rounded-xl w-full text-center">
-                        <h3 className="text-xl font-bold text-cyan-400 mb-4">Resize Complete!</h3>
-
-                        <p className="text-sm font-bold text-white mb-4">
-                          New Size: {resizedMetrics.sizeKB ? resizedMetrics.sizeKB.toFixed(2) : 'N/A'} KB
-                        </p>
-
-                        <img src={`${HOST}${resizedPath}`} alt="Resized Image"
-                          className="max-w-full h-auto object-contain mx-auto border border-cyan-500 rounded my-4" />
-
-                        <a
-                          href={`${HOST}${resizedPath}`} download
-                          className="inline-flex items-center justify-center py-2 px-6 rounded-xl bg-green-500 hover:bg-green-600 text-white font-semibold transition"
+                      <div className="animate-in fade-in zoom-in duration-300 p-5 sm:p-6 bg-green-500/10 rounded-2xl border border-green-500/30 text-center">
+                        <div className="flex items-center justify-center gap-2 mb-4">
+                          <span className="flex h-2 w-2 rounded-full bg-green-500 animate-pulse"></span>
+                          <h3 className="text-base font-bold text-green-400 uppercase tracking-wider">Processing Complete</h3>
+                        </div>
+                        <p className="text-sm text-gray-300 mb-4">New File Size: <span className="text-white font-bold">{resizedMetrics.sizeKB?.toFixed(1)} KB</span></p>
+                        <div className="max-w-xs mx-auto mb-6 bg-gray-900 rounded-lg p-2 border border-gray-700">
+                           <img src={`${HOST}${resizedPath}`} alt="Resized Result" className="w-full h-auto rounded" />
+                        </div>
+                        <a 
+                          href={`${HOST}${resizedPath}`} 
+                          download 
+                          className="inline-flex items-center justify-center px-8 py-3 rounded-xl bg-green-500 hover:bg-green-600 text-white font-bold text-sm transition-all shadow-lg shadow-green-900/20 active:scale-95 w-full sm:w-auto"
                         >
-                          Download Image
+                          Download Resized Image
                         </a>
                       </div>
                     )}
-                  </div>)}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
-          <div className="lg:w-1/3">
-            <div className="bg-gray-800 p-8 rounded-2xl border border-gray-700 shadow-2xl shadow-cyan-900/40 space-y-6">
-              <h2 className="text-xl font-semibold text-white mb-4 border-b border-gray-700/50 pb-2">
+          <div className="lg:col-span-4 w-full order-2">
+            <div className="bg-gray-800 p-6 rounded-2xl border border-gray-700 shadow-2xl lg:sticky lg:top-24">
+              <h2 className="text-lg font-bold mb-6 flex items-center gap-2">
+                <svg className="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
                 Resize Settings
               </h2>
-              <div>
-                <label htmlFor="resizeType" className="block text-sm font-semibold text-gray-300 mb-1">
-                  Resize Mode
-                </label>
-                <select
-                  id="resizeType"
-                  value={resizeType}
-                  onChange={(e) => setResizeType(e.target.value)}
-                  className="block w-full px-4 py-2 bg-gray-700 text-white border border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition duration-150"
-                >
-                  <option value="dimension">By Width and Height (px)</option>
-                  <option value="size">By Target File Size (KB)</option>
-                </select>
-              </div>
-
-              {resizeType === 'dimension' && (
-                <>
-                  <div>
-                    <label htmlFor="width" className="block text-sm font-semibold text-gray-300 mb-1">
-                      Width
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="number"
-                        id="width"
-                        placeholder="e.g., 800"
-                        min="1"
-                        value={width}
-                        onChange={(e) => setWidth(e.target.value)}
-                        className="block w-full px-4 py-2 bg-gray-700 text-white border border-gray-600 rounded-xl placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition duration-150"
-                      />
-                      <span className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 text-sm">
-                        px
-                      </span>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label htmlFor="height" className="block text-sm font-semibold text-gray-300 mb-1">
-                      Height
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="number"
-                        id="height"
-                        placeholder="e.g., 600"
-                        min="1"
-                        value={height}
-                        onChange={(e) => setHeight(e.target.value)}
-                        className="block w-full px-4 py-2 bg-gray-700 text-white border border-gray-600 rounded-xl placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition duration-150"
-                      />
-                      <span className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 text-sm">
-                        px
-                      </span>
-                    </div>
-                  </div>
-                </>
-              )}
-
-              {resizeType === 'size' && (
+              
+              <div className="space-y-6">
                 <div>
-                  <div className="flex items-center py-2">
-                    <div className="grow border-t border-gray-700/50"></div>
-                    <span className="shrink mx-4 text-gray-500 text-sm font-medium">Target</span>
-                    <div className="grow border-t border-gray-700/50"></div>
-                  </div>
-                  <label htmlFor="targetSizeKB" className="block text-sm font-semibold text-gray-300 mb-1">
-                    Target File Size
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="number"
-                      id="targetSizeKB"
-                      placeholder="e.g., 500"
-                      min="1"
-                      value={targetSizeKB}
-                      onChange={(e) => setTargetSizeKB(e.target.value)}
-                      className="block w-full px-4 py-2 bg-gray-700 text-white border border-gray-600 rounded-xl placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition duration-150"
-                    />
-                    <span className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 text-sm">
-                      KB
-                    </span>
-                  </div>
+                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Resize Mode</label>
+                  <select 
+                    value={resizeType} 
+                    onChange={(e) => setResizeType(e.target.value)} 
+                    className="w-full px-4 py-3 bg-gray-900 border border-gray-600 rounded-xl text-sm focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none transition-all appearance-none cursor-pointer"
+                  >
+                    <option value="dimension">By Dimensions (Pixels)</option>
+                    <option value="size">By File Size (KB)</option>
+                  </select>
                 </div>
-              )}
 
+                <div className="bg-gray-900/50 p-4 rounded-xl border border-gray-700">
+                  {resizeType === 'dimension' ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4">
+                      <div>
+                        <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1.5 ml-1">Width (px)</label>
+                        <input 
+                          type="number" 
+                          value={width} 
+                          onChange={(e) => setWidth(e.target.value)} 
+                          placeholder="e.g. 1920"
+                          className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-sm focus:border-cyan-500 outline-none transition-colors" 
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1.5 ml-1">Height (px)</label>
+                        <input 
+                          type="number" 
+                          value={height} 
+                          onChange={(e) => setHeight(e.target.value)} 
+                          placeholder="e.g. 1080"
+                          className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-sm focus:border-cyan-500 outline-none transition-colors" 
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1.5 ml-1">Target Size (KB)</label>
+                      <input 
+                        type="number" 
+                        value={targetSizeKB} 
+                        onChange={(e) => setTargetSizeKB(e.target.value)} 
+                        placeholder="e.g. 200"
+                        className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-sm focus:border-cyan-500 outline-none transition-colors" 
+                      />
+                    </div>
+                  )}
+                </div>
 
-              <button
-                className="w-full flex justify-center py-3 px-4 mt-6 border border-transparent rounded-xl shadow-lg text-md font-bold text-gray-900 bg-cyan-400 hover:bg-cyan-300 focus:outline-none focus:ring-4 focus:ring-offset-2 focus:ring-cyan-600 focus:ring-offset-gray-800 transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                onClick={ResizeImage}
-                disabled={isResizeDisabled}
-              >
-                {isLoading ? <LoadingIcons.ThreeDots className="h-6 w-6 text-gray-900" /> : "Resize and Save"}
-              </button>
+                <button 
+                  onClick={ResizeImage} 
+                  disabled={isResizeDisabled} 
+                  className="w-full py-4 bg-cyan-500 hover:bg-cyan-400 disabled:bg-gray-700 text-gray-900 font-black rounded-xl text-base transition-all transform active:scale-[0.98] disabled:transform-none disabled:opacity-50 shadow-lg shadow-cyan-500/20 flex justify-center items-center gap-3"
+                >
+                  {isLoading ? (
+                    <>
+                      <LoadingIcons.ThreeDots className="h-5 w-5 fill-current" />
+                      <span>Processing...</span>
+                    </>
+                  ) : (
+                    "Process Image"
+                  )}
+                </button>
+              </div>
             </div>
           </div>
-
         </div>
-      </div>
+      </main>
+
+      <footer className="py-8 border-t border-gray-800 text-center text-gray-500 text-xs">
+        &copy; {new Date().getFullYear()} LUMINA-STUDIO. All rights reserved.
+      </footer>
     </div>
   );
 };
