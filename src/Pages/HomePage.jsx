@@ -22,7 +22,7 @@ const Navbar = () => {
             <a href="#testimonials" className="text-gray-300 hover:text-cyan-400 font-medium transition duration-150">Testimonials</a>
 
             <SignedOut>
-              <a href="/signin" className="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition duration-150 border border-gray-600">Sign In</a>
+              <a href="/auth/signin" className="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition duration-150 border border-gray-600">Sign In</a>
             </SignedOut>
             <SignedIn>
               <UserButton afterSignOutUrl="/auth/signin" />
